@@ -1,36 +1,36 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# OfferPilot AI
 
-## Getting Started
+OfferPilot AI is an AI-powered SaaS that helps job seekers upload and analyze job offers, compare compensation packages, receive AI-powered negotiation advice, and manage multiple opportunities in one workspace.
 
-First, run the development server:
+## Tech Stack
+- **Frontend:** Next.js 15 (App Router), React, Tailwind CSS, shadcn/ui, Framer Motion
+- **Backend:** Next.js Route Handlers, Server Actions
+- **Database:** PostgreSQL (Neon), Prisma ORM
+- **Auth & Storage:** Supabase
+- **Payments:** Stripe (Test Mode)
+- **AI Integration:** Vercel AI SDK (OpenAI)
+- **Deployment:** Vercel
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Architecture
+(To be updated in upcoming milestones)
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Folder Structure
+- `app/` - Next.js App Router pages and API routes
+- `components/` - Reusable UI components (shadcn/ui, custom components)
+- `lib/` - Utility functions, Prisma client, AI utilities
+- `server/` - Server actions and API logic
+- `types/` - Shared TypeScript interfaces and types
+- `hooks/` - Custom React hooks
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Installation
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. Clone the repository
+2. Install dependencies: `npm install`
+3. Configure environment variables (see `.env.example`)
+4. Run development server: `npm run dev`
 
-## Learn More
+## Environment Variables
+(To be updated in upcoming milestones)
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Deployment
+(To be updated in upcoming milestones)
