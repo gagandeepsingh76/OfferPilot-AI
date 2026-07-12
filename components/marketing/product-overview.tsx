@@ -3,7 +3,7 @@
 import { motion } from "framer-motion"
 import { CheckCircle2, TrendingUp, Brain, FileText, Briefcase } from "lucide-react"
 
-export function Preview() {
+export function ProductOverview() {
   return (
     <section className="py-24 bg-muted/30 overflow-hidden relative border-y border-border/40">
       <div className="container mx-auto px-4 sm:px-8 max-w-6xl">

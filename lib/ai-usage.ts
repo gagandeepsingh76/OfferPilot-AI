@@ -9,11 +9,10 @@ const FREE_LIMITS: Record<AiActionType, number> = {
 }
 
 export async function getUsageStats(userId: string) {
-  const subscription = await prisma.subscription.findUnique({
-    where: { userId }
-  })
+  // Removed unused subscription lookup since assessment build grants PRO to all
 
-  const isPro = subscription?.plan === "PRO"
+  // ASSESSMENT BUILD: All users get PRO access to showcase all features without payment
+  const isPro = true
   
   const startOfMonth = new Date()
   startOfMonth.setDate(1)

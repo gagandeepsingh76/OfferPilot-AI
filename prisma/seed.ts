@@ -106,6 +106,50 @@ async function main() {
           learningBudget: true,
         },
       }
+    },
+    {
+      id: 'demo-offer-4',
+      companyName: 'Netflix',
+      jobTitle: 'Senior Software Engineer',
+      location: 'Los Gatos, CA',
+      status: 'REJECTED',
+      comp: {
+        baseSalary: 450000,
+        currency: 'USD',
+        signOnBonus: 0,
+        bonus: 0,
+        equity: 0,
+        equityType: 'None',
+        ptoDays: 30,
+        benefits: {
+          healthInsurance: true,
+          dentalInsurance: true,
+          wfhAllowance: false,
+          learningBudget: false,
+        },
+      }
+    },
+    {
+      id: 'demo-offer-5',
+      companyName: 'Apple',
+      jobTitle: 'ICT4 Software Engineer',
+      location: 'Cupertino, CA',
+      status: 'ACCEPTED',
+      comp: {
+        baseSalary: 190000,
+        currency: 'USD',
+        signOnBonus: 40000,
+        bonus: 28500,
+        equity: 350000,
+        equityType: 'RSU',
+        ptoDays: 18,
+        benefits: {
+          healthInsurance: true,
+          dentalInsurance: true,
+          visionInsurance: true,
+          retirementPlan: true,
+        },
+      }
     }
   ]
 

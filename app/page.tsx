@@ -1,10 +1,9 @@
 import { Navbar } from '@/components/marketing/navbar'
 import { Hero } from '@/components/marketing/hero'
-import { TrustedBy } from '@/components/marketing/trusted-by'
-import { Features } from '@/components/marketing/features'
-import { Preview } from '@/components/marketing/preview'
-import { Pricing } from '@/components/marketing/pricing'
+import { ProductOverview } from '@/components/marketing/product-overview'
+import { HowItWorks } from '@/components/marketing/how-it-works'
 import { ProductBenefits } from '@/components/marketing/product-benefits'
+import { Architecture } from '@/components/marketing/architecture'
 import { FAQ } from '@/components/marketing/faq'
 import { CTA } from '@/components/marketing/cta'
 import { Footer } from '@/components/marketing/footer'
@@ -15,11 +14,10 @@ export default function Home() {
       <Navbar />
       <main className="flex-1">
         <Hero />
-        <TrustedBy />
-        <Preview />
-        <Features />
+        <ProductOverview />
+        <HowItWorks />
         <ProductBenefits />
-        <Pricing />
+        <Architecture />
         <FAQ />
         <CTA />
       </main>
