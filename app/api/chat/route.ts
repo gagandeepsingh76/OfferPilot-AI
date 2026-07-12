@@ -1,6 +1,6 @@
-import { NextRequest } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import { streamText } from "ai"
-import { openai } from "@ai-sdk/openai"
+import { getOpenAI } from "@/lib/openai"
 import { createClient } from "@/lib/supabase/server"
 import { prisma } from "@/lib/prisma"
 import { checkAiUsage, recordAiUsage, logAiJob } from "@/lib/ai-usage"
@@ -22,6 +22,11 @@ export async function POST(req: NextRequest) {
   const hasUsage = await checkAiUsage(prismaUser.id, "CHAT_MESSAGE")
   if (!hasUsage) {
     return new Response("Free plan limit reached. Upgrade to Pro.", { status: 403 })
+  }
+
+  const openai = getOpenAI()
+  if (!openai) {
+    return NextResponse.json({ error: "AI features are currently unavailable. Please configure OpenAI." }, { status: 503 })
   }
 
   try {

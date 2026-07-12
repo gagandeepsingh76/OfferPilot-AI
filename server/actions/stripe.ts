@@ -1,6 +1,6 @@
 "use server"
 
-import { stripe } from "@/lib/stripe"
+import { getStripe } from "@/lib/stripe"
 import { createClient } from "@/lib/supabase/server"
 import { prisma } from "@/lib/prisma"
 
@@ -36,30 +36,35 @@ export async function createCheckoutSession() {
       return { success: false, error: "You already have a Pro subscription" }
     }
 
-    let customerId = dbUser.subscription?.stripeCustomerId
+    let stripeCustomerId = dbUser.subscription?.stripeCustomerId
 
-    if (!customerId) {
+    const stripe = getStripe()
+    if (!stripe) {
+      return { success: false, error: "Billing is currently unavailable. Please configure Stripe." }
+    }
+
+    if (!stripeCustomerId) {
       const customer = await stripe.customers.create({
         email: dbUser.email,
         metadata: {
           userId: dbUser.id,
         }
       })
-      customerId = customer.id
+      stripeCustomerId = customer.id
 
       // Store the customer ID immediately
       await prisma.subscription.upsert({
         where: { userId: dbUser.id },
-        update: { stripeCustomerId: customerId },
+        update: { stripeCustomerId: stripeCustomerId },
         create: {
           userId: dbUser.id,
-          stripeCustomerId: customerId,
+          stripeCustomerId: stripeCustomerId,
         }
       })
     }
 
     const session = await stripe.checkout.sessions.create({
-      customer: customerId,
+      customer: stripeCustomerId,
       mode: "subscription",
       payment_method_types: ["card"],
       line_items: [
@@ -100,12 +105,19 @@ export async function createCustomerPortalSession() {
       include: { subscription: true }
     })
 
-    if (!dbUser || !dbUser.subscription?.stripeCustomerId) {
-      return { success: false, error: "No active customer found" }
+    const stripeCustomerId = dbUser?.subscription?.stripeCustomerId
+
+    if (!stripeCustomerId) {
+      return { success: false, error: "No active subscription found" }
+    }
+
+    const stripe = getStripe()
+    if (!stripe) {
+      return { success: false, error: "Billing is currently unavailable. Please configure Stripe." }
     }
 
     const portalSession = await stripe.billingPortal.sessions.create({
-      customer: dbUser.subscription.stripeCustomerId,
+      customer: stripeCustomerId,
       return_url: `${APP_URL}/dashboard/settings/billing`,
     })
 

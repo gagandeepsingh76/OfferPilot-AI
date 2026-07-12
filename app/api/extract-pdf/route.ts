@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { generateObject } from "ai"
-import { openai } from "@ai-sdk/openai"
+import { getOpenAI } from "@/lib/openai"
 import { z } from "zod"
 import { createClient } from "@/lib/supabase/server"
 import { prisma } from "@/lib/prisma"
@@ -71,6 +71,11 @@ export async function POST(req: NextRequest) {
 
     if (!pdfText || pdfText.trim().length === 0) {
       throw new Error("Could not extract text from PDF")
+    }
+
+    const openai = getOpenAI()
+    if (!openai) {
+      return NextResponse.json({ error: "AI features are currently unavailable. Please configure OpenAI." }, { status: 503 })
     }
 
     const { object, usage } = await generateObject({

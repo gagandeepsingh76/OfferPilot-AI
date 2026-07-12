@@ -1,13 +1,18 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextResponse } from "next/server"
 import { headers } from "next/headers"
-import { stripe } from "@/lib/stripe"
+import { getStripe } from "@/lib/stripe"
 import { prisma } from "@/lib/prisma"
 import Stripe from "stripe"
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET
 
 export async function POST(req: Request) {
+  const stripe = getStripe()
+  if (!stripe) {
+    return NextResponse.json({ error: "Stripe is not configured" }, { status: 503 })
+  }
+
   try {
     const body = await req.text()
     const signature = (await headers()).get("Stripe-Signature") as string

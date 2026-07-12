@@ -1,6 +1,6 @@
-import { NextRequest } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import { streamText } from "ai"
-import { openai } from "@ai-sdk/openai"
+import { getOpenAI } from "@/lib/openai"
 import { createClient } from "@/lib/supabase/server"
 import { prisma } from "@/lib/prisma"
 import { checkAiUsage, recordAiUsage, logAiJob } from "@/lib/ai-usage"
@@ -73,6 +73,11 @@ export async function POST(req: NextRequest) {
     `
 
     await recordAiUsage(prismaUser.id, "AI_COMPARISON")
+
+    const openai = getOpenAI()
+    if (!openai) {
+      return NextResponse.json({ error: "AI features are currently unavailable. Please configure OpenAI." }, { status: 503 })
+    }
 
     const result = await streamText({
       model: openai("gpt-4o-mini"),
