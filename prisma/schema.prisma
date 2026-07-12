@@ -1,0 +1,228 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// Enums
+enum PlanType {
+  FREE
+  PRO
+}
+
+enum OfferStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  ARCHIVED
+}
+
+enum AuditAction {
+  OFFER_CREATED
+  OFFER_UPDATED
+  OFFER_DELETED
+  SUBSCRIPTION_CREATED
+  SUBSCRIPTION_UPDATED
+  SUBSCRIPTION_CANCELED
+}
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  name          String?
+  avatarUrl     String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Supabase Auth ID
+  authId        String    @unique
+
+  // Relations
+  profile       Profile?
+  subscription  Subscription?
+  offers        Offer[]
+  comparisons   Comparison[]
+  chatSessions  ChatSession[]
+  usageRecords  UsageRecord[]
+  auditLogs     AuditLog[]
+}
+
+model Profile {
+  id             String    @id @default(uuid())
+  userId         String    @unique
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  currentRole    String?
+  experienceLevel String?
+  preferences    Json?
+
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}
+
+model Subscription {
+  id                   String    @id @default(uuid())
+  userId               String    @unique
+  user                 User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  plan                 PlanType  @default(FREE)
+  stripeCustomerId     String?   @unique
+  stripeSubscriptionId String?   @unique
+  stripePriceId        String?
+  currentPeriodEnd     DateTime?
+  cancelAtPeriodEnd    Boolean   @default(false)
+
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+}
+
+model Offer {
+  id            String       @id @default(uuid())
+  userId        String
+  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  companyName   String
+  jobTitle      String
+  location      String?
+  status        OfferStatus  @default(PENDING)
+  notes         String?      @db.Text
+  
+  // Relations
+  compensation  Compensation?
+  documents     OfferDocument[]
+  chatSessions  ChatSession[]
+  comparisons   ComparisonOffer[]
+
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@index([userId])
+}
+
+model Compensation {
+  id            String    @id @default(uuid())
+  offerId       String    @unique
+  offer         Offer     @relation(fields: [offerId], references: [id], onDelete: Cascade)
+  
+  baseSalary    Float
+  currency      String    @default("USD")
+  bonus         Float?
+  equity        Float?
+  equityType    String?   // e.g., RSU, Options
+  signOnBonus   Float?
+  ptoDays       Int?
+  benefits      Json?     // Storing array of benefits or unstructured data
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model OfferDocument {
+  id            String    @id @default(uuid())
+  offerId       String
+  offer         Offer     @relation(fields: [offerId], references: [id], onDelete: Cascade)
+  
+  fileName      String
+  fileUrl       String    // Supabase Storage URL or path
+  fileType      String    // e.g., application/pdf
+  fileSize      Int       // in bytes
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([offerId])
+}
+
+model Comparison {
+  id            String    @id @default(uuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  name          String?
+  notes         String?   @db.Text
+  
+  // Many-to-many relation to Offers
+  offers        ComparisonOffer[]
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([userId])
+}
+
+// Join table for Comparison and Offer
+model ComparisonOffer {
+  comparisonId  String
+  comparison    Comparison @relation(fields: [comparisonId], references: [id], onDelete: Cascade)
+  offerId       String
+  offer         Offer      @relation(fields: [offerId], references: [id], onDelete: Cascade)
+
+  assignedAt    DateTime   @default(now())
+
+  @@id([comparisonId, offerId])
+  @@index([comparisonId])
+  @@index([offerId])
+}
+
+model ChatSession {
+  id            String    @id @default(uuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  offerId       String?
+  offer         Offer?    @relation(fields: [offerId], references: [id], onDelete: SetNull)
+  
+  title         String?
+  
+  messages      ChatMessage[]
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([offerId])
+}
+
+model ChatMessage {
+  id            String      @id @default(uuid())
+  sessionId     String
+  session       ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  
+  role          String      // 'user', 'assistant', 'system'
+  content       String      @db.Text
+  
+  createdAt     DateTime    @default(now())
+
+  @@index([sessionId])
+}
+
+model UsageRecord {
+  id            String    @id @default(uuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  actionType    String    // e.g., 'OFFER_UPLOAD', 'AI_ANALYSIS', 'CHAT_MESSAGE'
+  count         Int       @default(1)
+  
+  createdAt     DateTime  @default(now())
+
+  @@index([userId])
+}
+
+model AuditLog {
+  id            String      @id @default(uuid())
+  userId        String
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  action        AuditAction
+  details       Json?       // e.g., { "offerId": "..." }
+  ipAddress     String?
+  
+  createdAt     DateTime    @default(now())
+
+  @@index([userId])
+}
