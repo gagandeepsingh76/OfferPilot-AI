@@ -3,7 +3,8 @@
 import { motion } from "framer-motion"
 import Link from "next/link"
 import { ArrowRight } from "lucide-react"
-import { buttonVariants } from "@/components/ui/button"
+import { buttonVariants, Button } from "@/components/ui/button"
+import { enableDemoMode } from "@/server/actions/auth"
 
 export function Hero() {
   return (
@@ -34,13 +35,15 @@ export function Hero() {
             Upload and analyze job offers, compare compensation packages, and receive AI-powered negotiation advice to maximize your earning potential.
           </p>
           
-          <div className="flex flex-col sm:flex-row gap-4 mt-4">
+          <div className="flex flex-col sm:flex-row items-center gap-4 mt-4">
             <Link href="/signup" className={buttonVariants({ size: "lg", className: "gap-2" })}>
               Start for free <ArrowRight className="h-4 w-4" />
             </Link>
-            <Link href="#features" className={buttonVariants({ variant: "outline", size: "lg" })}>
-              See how it works
-            </Link>
+            <form action={enableDemoMode}>
+              <Button type="submit" variant="secondary" size="lg" className="gap-2">
+                Explore Demo
+              </Button>
+            </form>
           </div>
         </motion.div>
       </div>

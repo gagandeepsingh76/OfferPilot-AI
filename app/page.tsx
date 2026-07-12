@@ -4,7 +4,7 @@ import { TrustedBy } from '@/components/marketing/trusted-by'
 import { Features } from '@/components/marketing/features'
 import { Preview } from '@/components/marketing/preview'
 import { Pricing } from '@/components/marketing/pricing'
-import { Testimonials } from '@/components/marketing/testimonials'
+import { ProductBenefits } from '@/components/marketing/product-benefits'
 import { FAQ } from '@/components/marketing/faq'
 import { CTA } from '@/components/marketing/cta'
 import { Footer } from '@/components/marketing/footer'
@@ -18,7 +18,7 @@ export default function Home() {
         <TrustedBy />
         <Preview />
         <Features />
-        <Testimonials />
+        <ProductBenefits />
         <Pricing />
         <FAQ />
         <CTA />

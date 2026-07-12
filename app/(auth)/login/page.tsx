@@ -12,7 +12,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { toast } from 'sonner'
-import { Loader2 } from 'lucide-react'
+import { Loader2, ArrowRight, AlertTriangle } from 'lucide-react'
+import { enableDemoMode } from '@/server/actions/auth'
 
 const formSchema = z.object({
   email: z.string().email({ message: 'Invalid email address' }),
@@ -60,6 +61,35 @@ export default function LoginPage() {
     } else if (result.url) {
       window.location.href = result.url
     }
+  }
+
+  const isSupabaseConfigured = 
+    process.env.NEXT_PUBLIC_SUPABASE_URL && 
+    process.env.NEXT_PUBLIC_SUPABASE_URL !== 'https://your-project.supabase.co' &&
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY &&
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY !== 'your-anon-key'
+
+  if (!isSupabaseConfigured) {
+    return (
+      <div className="space-y-6">
+        <div className="space-y-2 text-center">
+          <AlertTriangle className="w-12 h-12 text-yellow-500 mx-auto mb-4" />
+          <h1 className="text-2xl font-bold tracking-tight">Configuration Required</h1>
+          <p className="text-sm text-muted-foreground">
+            Authentication is currently disabled because Supabase environment variables are missing or using placeholder values.
+          </p>
+        </div>
+        <div className="bg-muted p-4 rounded-md text-xs font-mono break-all text-muted-foreground">
+          NEXT_PUBLIC_SUPABASE_URL<br />
+          NEXT_PUBLIC_SUPABASE_ANON_KEY
+        </div>
+        <form action={enableDemoMode}>
+          <Button type="submit" className="w-full gap-2" size="lg">
+            Explore Demo Account <ArrowRight className="w-4 h-4" />
+          </Button>
+        </form>
+      </div>
+    )
   }
 
   return (
@@ -143,6 +173,14 @@ export default function LoginPage() {
         )}
         Google
       </Button>
+
+      <div className="pt-4">
+        <form action={enableDemoMode}>
+          <Button type="submit" variant="secondary" className="w-full gap-2">
+            Continue with Demo Account <ArrowRight className="w-4 h-4" />
+          </Button>
+        </form>
+      </div>
 
       <p className="text-center text-sm text-muted-foreground">
         Don&apos;t have an account?{' '}

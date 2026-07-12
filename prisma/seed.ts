@@ -1,86 +1,164 @@
-import { PrismaClient, PlanType, OfferStatus, AuditAction } from '@prisma/client'
+import { PrismaClient } from '@prisma/client'
 
 const prisma = new PrismaClient()
 
 async function main() {
-  console.log('Starting database seeding...')
+  const demoUserId = 'demo-user-id'
 
-  // Clean up existing data (optional, but good for local dev)
-  await prisma.auditLog.deleteMany()
-  await prisma.usageRecord.deleteMany()
-  await prisma.chatMessage.deleteMany()
-  await prisma.chatSession.deleteMany()
-  await prisma.comparisonOffer.deleteMany()
-  await prisma.comparison.deleteMany()
-  await prisma.offerDocument.deleteMany()
-  await prisma.compensation.deleteMany()
-  await prisma.offer.deleteMany()
-  await prisma.subscription.deleteMany()
-  await prisma.profile.deleteMany()
-  await prisma.user.deleteMany()
-
-  // Create a dummy user
-  const user = await prisma.user.create({
-    data: {
+  // Upsert User
+  const user = await prisma.user.upsert({
+    where: { email: 'demo@offerpilot.ai' },
+    update: { authId: demoUserId },
+    create: {
+      id: demoUserId,
+      authId: demoUserId,
       email: 'demo@offerpilot.ai',
-      name: 'Demo User',
-      authId: 'mock-auth-id-12345',
-      profile: {
-        create: {
-          currentRole: 'Software Engineer',
-          experienceLevel: 'Mid-Level',
-          preferences: { location: 'Remote' },
-        },
-      },
-      subscription: {
-        create: {
-          plan: PlanType.PRO,
-        },
-      },
     },
   })
 
-  // Create a dummy offer
-  const offer = await prisma.offer.create({
-    data: {
+  // Upsert Profile
+  await prisma.profile.upsert({
+    where: { userId: user.id },
+    update: {},
+    create: {
       userId: user.id,
-      companyName: 'TechCorp Inc.',
-      jobTitle: 'Senior Software Engineer',
-      location: 'San Francisco, CA',
-      status: OfferStatus.PENDING,
-      compensation: {
-        create: {
-          baseSalary: 150000,
-          currency: 'USD',
-          bonus: 15000,
-          equity: 50000,
-          equityType: 'RSU',
-          signOnBonus: 10000,
-          ptoDays: 21,
-          benefits: { health: true, dental: true, vision: true, match401k: '4%' },
-        },
-      },
+      currentRole: 'Senior Software Engineer',
+      experienceLevel: '5+ years',
     },
   })
 
-  // Create an audit log for the offer creation
-  await prisma.auditLog.create({
-    data: {
+  // Upsert Subscription
+  await prisma.subscription.upsert({
+    where: { userId: user.id },
+    update: { plan: 'PRO' },
+    create: {
       userId: user.id,
-      action: AuditAction.OFFER_CREATED,
-      details: { offerId: offer.id, companyName: offer.companyName },
+      plan: 'PRO',
+      stripeCustomerId: 'cus_demo123',
     },
   })
 
-  console.log(`Seeded user: ${user.email} with 1 offer.`)
-  console.log('Seeding completed successfully.')
+  // Upsert Offers
+  const offersData = [
+    {
+      id: 'demo-offer-1',
+      companyName: 'Google',
+      jobTitle: 'L5 Software Engineer',
+      location: 'Mountain View, CA',
+      status: 'PENDING',
+      comp: {
+        baseSalary: 210000,
+        currency: 'USD',
+        signOnBonus: 50000,
+        bonus: 31500,
+        equity: 600000,
+        equityType: 'RSU',
+        ptoDays: 20,
+        benefits: {
+          healthInsurance: true,
+          dentalInsurance: true,
+          visionInsurance: true,
+          retirementPlan: true,
+          relocation: true,
+        },
+      }
+    },
+    {
+      id: 'demo-offer-2',
+      companyName: 'Meta',
+      jobTitle: 'E5 Software Engineer',
+      location: 'Menlo Park, CA',
+      status: 'PENDING',
+      comp: {
+        baseSalary: 220000,
+        currency: 'USD',
+        signOnBonus: 75000,
+        bonus: 33000,
+        equity: 550000,
+        equityType: 'RSU',
+        ptoDays: 21,
+        benefits: {
+          healthInsurance: true,
+          dentalInsurance: true,
+          visionInsurance: true,
+          retirementPlan: true,
+        },
+      }
+    },
+    {
+      id: 'demo-offer-3',
+      companyName: 'Stripe',
+      jobTitle: 'L3 Software Engineer',
+      location: 'Remote',
+      status: 'PENDING',
+      comp: {
+        baseSalary: 230000,
+        currency: 'USD',
+        signOnBonus: 0,
+        bonus: 0,
+        equity: 400000,
+        equityType: 'Options',
+        ptoDays: 25,
+        benefits: {
+          healthInsurance: true,
+          dentalInsurance: true,
+          wfhAllowance: true,
+          learningBudget: true,
+        },
+      }
+    }
+  ]
+
+  for (const offer of offersData) {
+    const o = await prisma.offer.upsert({
+      where: { id: offer.id },
+      update: {},
+      create: {
+        id: offer.id,
+        userId: user.id,
+        companyName: offer.companyName,
+        jobTitle: offer.jobTitle,
+        location: offer.location,
+        status: offer.status as 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'ARCHIVED',
+      },
+    })
+    
+    await prisma.compensation.upsert({
+      where: { offerId: o.id },
+      update: {},
+      create: {
+        offerId: o.id,
+        ...offer.comp,
+      },
+    })
+  }
+
+  // Seed Chat Sessions
+  await prisma.chatSession.upsert({
+    where: { id: 'demo-chat-1' },
+    update: {},
+    create: {
+      id: 'demo-chat-1',
+      userId: user.id,
+      offerId: 'demo-offer-1',
+      messages: {
+        create: [
+          { role: 'user', content: 'What are the main weaknesses of this offer?' },
+          { role: 'assistant', content: 'While the base salary and equity are very strong for an L5 position, the target bonus is relatively standard. Additionally, the PTO policy is average. You might have room to negotiate the sign-on bonus higher.' }
+        ]
+      }
+    }
+  })
+
+  console.log('Seeding complete for demo user.')
 }
 
 main()
-  .catch((e) => {
-    console.error('Error seeding database:', e)
-    process.exit(1)
-  })
-  .finally(async () => {
+  .then(async () => {
     await prisma.$disconnect()
+  })
+  .catch(async (e) => {
+    console.error(e)
+    await prisma.$disconnect()
+    process.exit(1)
   })

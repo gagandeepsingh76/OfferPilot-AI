@@ -1,7 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
-import { headers } from 'next/headers'
+import { headers, cookies } from 'next/headers'
 
 export async function login(formData: FormData) {
   const email = formData.get('email') as string
@@ -101,4 +101,12 @@ export async function signInWithGoogle() {
   }
   
   return { error: error?.message || 'Failed to authenticate with Google' }
+}
+
+export async function enableDemoMode() {
+  const cookieStore = await cookies()
+  cookieStore.set('demo_mode', 'true', { maxAge: 60 * 60 * 24 * 7 }) // 1 week
+  
+  const { redirect } = await import('next/navigation')
+  redirect('/dashboard')
 }

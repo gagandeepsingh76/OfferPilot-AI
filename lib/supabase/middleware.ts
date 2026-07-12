@@ -6,9 +6,11 @@ export async function updateSession(request: NextRequest) {
     request,
   })
 
+  const isDemo = request.cookies.get('demo_mode')?.value === 'true'
+
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://mock.supabase.co',
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'mock-key',
     {
       cookies: {
         getAll() {
@@ -27,10 +29,15 @@ export async function updateSession(request: NextRequest) {
     }
   )
 
-  // This will refresh session if expired - required for Server Components
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  let user = null
+
+  if (isDemo) {
+    user = { id: "demo-user-id", email: "demo@offerpilot.ai", role: "authenticated" }
+  } else {
+    // This will refresh session if expired - required for Server Components
+    const { data } = await supabase.auth.getUser()
+    user = data.user
+  }
 
   // Protect private routes
   const isAuthRoute = request.nextUrl.pathname.startsWith('/login') || request.nextUrl.pathname.startsWith('/signup') || request.nextUrl.pathname.startsWith('/forgot-password') || request.nextUrl.pathname.startsWith('/reset-password')
