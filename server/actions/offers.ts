@@ -23,6 +23,11 @@ async function getPrismaUser() {
 export async function createOffer(data: OfferFormValues) {
   try {
     const user = await getPrismaUser()
+    const { checkFeatureLimit } = await import("@/lib/ai-usage")
+    const canCreate = await checkFeatureLimit(user.id, "OFFERS")
+    if (!canCreate) {
+      return { success: false, error: "LIMIT_REACHED" }
+    }
     
     const offer = await prisma.offer.create({
       data: {
@@ -165,6 +170,12 @@ export async function saveOfferDocument(offerId: string, fileName: string, fileU
     
     const existing = await prisma.offer.findUnique({ where: { id: offerId } })
     if (!existing || existing.userId !== user.id) throw new Error("Not found or unauthorized")
+
+    const { checkFeatureLimit } = await import("@/lib/ai-usage")
+    const canUpload = await checkFeatureLimit(user.id, "PDF_UPLOAD")
+    if (!canUpload) {
+      return { success: false, error: "LIMIT_REACHED" }
+    }
 
     const document = await prisma.offerDocument.create({
       data: {

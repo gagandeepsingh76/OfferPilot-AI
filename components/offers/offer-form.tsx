@@ -92,8 +92,13 @@ export function OfferForm({ initialData }: OfferFormProps) {
       toast.success(initialData ? "Offer updated successfully" : "Offer created successfully")
       router.push("/dashboard/offers")
       router.refresh()
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Something went wrong")
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
+      if (error.message === "LIMIT_REACHED") {
+        toast.error("You have reached your free plan limit. Please upgrade to Pro in Settings > Billing.")
+      } else {
+        toast.error(error.message || "Something went wrong")
+      }
     } finally {
       setIsPending(false)
     }
@@ -157,7 +162,11 @@ export function OfferForm({ initialData }: OfferFormProps) {
       }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
-      toast.error(error.message || "Failed to analyze document")
+      if (error.message === "LIMIT_REACHED" || error.message.includes("Free plan limit")) {
+        toast.error("You have reached your AI limit. Please upgrade to Pro in Settings > Billing.")
+      } else {
+        toast.error(error.message || "Failed to analyze document")
+      }
     } finally {
       setIsExtracting(false)
     }
