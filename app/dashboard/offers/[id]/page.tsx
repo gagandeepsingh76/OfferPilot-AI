@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation"
-import { ArrowLeft } from "lucide-react"
+import { ArrowLeft, MessageSquare } from "lucide-react"
 import Link from "next/link"
 import { prisma } from "@/lib/prisma"
 import { createClient } from "@/lib/supabase/server"
@@ -76,6 +76,13 @@ export default async function EditOfferPage({ params }: { params: { id: string }
             </p>
           </div>
           <div className="flex gap-2">
+            <Link
+              href={`/dashboard/offers/${offer.id}/chat`}
+              className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-primary/10 text-primary shadow-sm hover:bg-primary/20 h-9 px-4 py-2"
+            >
+              <MessageSquare className="mr-2 h-4 w-4" />
+              Negotiation Coach
+            </Link>
             {offer.documents.length > 0 && (
               <a
                 href={offer.documents[0].fileUrl}

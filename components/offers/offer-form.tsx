@@ -10,6 +10,7 @@ import { toast } from "sonner"
 import { OfferFormSchema, OfferFormValues } from "@/lib/validations/offer"
 import { createOffer, updateOffer, saveOfferDocument } from "@/server/actions/offers"
 import { createClient } from "@/lib/supabase/client"
+import { Sparkles } from "lucide-react"
 
 interface OfferFormProps {
   initialData?: OfferFormValues & { id: string }
@@ -19,6 +20,7 @@ export function OfferForm({ initialData }: OfferFormProps) {
   const router = useRouter()
   const [isPending, setIsPending] = React.useState(false)
   const [file, setFile] = React.useState<File | null>(null)
+  const [isExtracting, setIsExtracting] = React.useState(false)
   
   const form = useForm<OfferFormValues>({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -97,10 +99,75 @@ export function OfferForm({ initialData }: OfferFormProps) {
     }
   }
 
+  async function handleAiExtract() {
+    if (!file) return
+    setIsExtracting(true)
+    
+    try {
+      const supabase = createClient()
+      const { data: userData } = await supabase.auth.getUser()
+      const userId = userData.user?.id
+      
+      if (!userId) throw new Error("Unauthorized")
+
+      // Upload temporarily for extraction
+      const filePath = `${userId}/temp/${Date.now()}_${file.name}`
+      const { error: uploadError } = await supabase.storage
+        .from("offer-documents")
+        .upload(filePath, file)
+
+      if (uploadError) throw new Error("Failed to upload document for analysis")
+
+      const { data: publicUrlData } = supabase.storage
+        .from("offer-documents")
+        .getPublicUrl(filePath)
+
+      const response = await fetch("/api/extract-pdf", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fileUrl: publicUrlData.publicUrl })
+      })
+
+      const result = await response.json()
+      
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to analyze document")
+      }
+
+      if (result.data) {
+        const d = result.data
+        form.reset({
+          ...form.getValues(),
+          companyName: d.companyName || "",
+          jobTitle: d.jobTitle || "",
+          location: d.location || "",
+          baseSalary: d.baseSalary || 0,
+          currency: d.currency || "USD",
+          signOnBonus: d.signOnBonus || 0,
+          bonus: d.bonus || 0,
+          equity: d.equity || 0,
+          equityType: d.equityType || "",
+          ptoDays: d.ptoDays || 0,
+          benefits: {
+            ...form.getValues().benefits,
+            ...d.benefits
+          }
+        })
+        toast.success(`Extracted data with ${d.confidenceScore}% confidence. Please review before saving.`)
+      }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
+      toast.error(error.message || "Failed to analyze document")
+    } finally {
+      setIsExtracting(false)
+    }
+  }
+
   return (
-    {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-    <form onSubmit={form.handleSubmit(onSubmit as any)} className="space-y-8">
-      <div className="grid gap-6 md:grid-cols-2">
+    <>
+      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+      <form onSubmit={form.handleSubmit(onSubmit as any)} className="space-y-8">
+        <div className="grid gap-6 md:grid-cols-2">
         {/* Basic Details */}
         <div className="space-y-4">
           <h3 className="text-lg font-medium">Basic Details</h3>
@@ -275,7 +342,7 @@ export function OfferForm({ initialData }: OfferFormProps) {
 
           <div className="grid gap-2 pt-2">
             <label className="text-sm font-medium">Offer Document (PDF)</label>
-            <div className="flex items-center gap-4">
+            <div className="flex flex-col gap-4">
               <label className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-md border border-dashed border-border px-4 py-6 text-sm hover:bg-muted/50 transition-colors">
                 <UploadCloud className="h-5 w-5 text-muted-foreground" />
                 <span className="text-muted-foreground">{file ? file.name : "Click to upload PDF"}</span>
@@ -286,10 +353,22 @@ export function OfferForm({ initialData }: OfferFormProps) {
                   onChange={(e) => setFile(e.target.files?.[0] || null)}
                 />
               </label>
+              
               {file && (
-                <button type="button" onClick={() => setFile(null)} className="text-sm text-destructive hover:underline">
-                  Remove
-                </button>
+                <div className="flex items-center gap-3">
+                  <button 
+                    type="button" 
+                    onClick={handleAiExtract}
+                    disabled={isExtracting}
+                    className="inline-flex items-center gap-2 text-sm font-medium bg-indigo-500/10 text-indigo-500 hover:bg-indigo-500/20 px-3 py-1.5 rounded-md transition-colors"
+                  >
+                    {isExtracting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                    {isExtracting ? "Analyzing..." : "Auto-fill with AI"}
+                  </button>
+                  <button type="button" onClick={() => setFile(null)} className="text-sm text-destructive hover:underline">
+                    Remove file
+                  </button>
+                </div>
               )}
             </div>
           </div>
@@ -314,5 +393,6 @@ export function OfferForm({ initialData }: OfferFormProps) {
         </button>
       </div>
     </form>
+    </>
   )
 }
