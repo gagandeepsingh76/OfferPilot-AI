@@ -34,7 +34,8 @@ export async function signup(formData: FormData) {
   const name = formData.get('name') as string
   const supabase = await createClient()
 
-  const origin = (await headers()).get('origin')
+  const requestOrigin = (await headers()).get('origin')
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || requestOrigin || 'https://offerpilot.ai'
 
   const { error } = await supabase.auth.signUp({
     email,
@@ -43,7 +44,7 @@ export async function signup(formData: FormData) {
       data: {
         full_name: name,
       },
-      emailRedirectTo: `${origin}/auth/callback`,
+      emailRedirectTo: `${baseUrl}/auth/callback`,
     },
   })
 
@@ -98,12 +99,13 @@ export async function updatePassword(formData: FormData) {
 
 export async function signInWithGoogle() {
   const supabase = await createClient()
-  const origin = (await headers()).get('origin')
+  const requestOrigin = (await headers()).get('origin')
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || requestOrigin || 'https://offerpilot.ai'
   
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: `${origin}/auth/callback`,
+      redirectTo: `${baseUrl}/auth/callback`,
     },
   })
   
