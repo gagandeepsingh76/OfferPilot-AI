@@ -1,6 +1,6 @@
 "use client"
 
-import { LogOut, User as UserIcon } from "lucide-react"
+import { LogOut } from "lucide-react"
 import { logout } from "@/server/actions/auth"
 import {
   DropdownMenu,
@@ -11,19 +11,28 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { buttonVariants } from "@/components/ui/button"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import type { User } from "@supabase/supabase-js"
 
-export function UserNav() {
+export function UserNav({ user }: { user?: User | null }) {
+  const email = user?.email || "demo@offerpilot.ai"
+  const name = user?.user_metadata?.full_name || "Demo User"
+  const avatarUrl = user?.user_metadata?.avatar_url || ""
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger className={buttonVariants({ variant: "ghost", size: "icon", className: "rounded-full overflow-hidden h-8 w-8 bg-muted" })}>
-        <UserIcon className="h-4 w-4 text-muted-foreground" />
+        <Avatar className="h-8 w-8">
+          <AvatarImage src={avatarUrl} alt={name} />
+          <AvatarFallback>{name.charAt(0).toUpperCase()}</AvatarFallback>
+        </Avatar>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56" align="end">
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">Account</p>
+            <p className="text-sm font-medium leading-none">{name}</p>
             <p className="text-xs leading-none text-muted-foreground">
-              user@example.com
+              {email}
             </p>
           </div>
         </DropdownMenuLabel>

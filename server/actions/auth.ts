@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { headers, cookies } from 'next/headers'
+import { prisma } from '@/lib/prisma'
 
 export async function login(formData: FormData) {
   const email = formData.get('email') as string
@@ -120,6 +121,28 @@ export async function enableDemoMode() {
   const cookieStore = await cookies()
   cookieStore.set('demo_mode', 'true', { maxAge: 60 * 60 * 24 * 7 }) // 1 week
   
+  // Seed demo data if it doesn't exist
+  const existingOffers = await prisma.offer.count({ where: { userId: "demo-user-id" } })
+  
+  if (existingOffers === 0) {
+    await prisma.offer.createMany({
+      data: [
+        {
+          userId: "demo-user-id",
+          companyName: "TechNova Solutions",
+          jobTitle: "Senior Frontend Engineer",
+          status: "PENDING"
+        },
+        {
+          userId: "demo-user-id",
+          companyName: "DataSphere Inc.",
+          jobTitle: "Full Stack Developer",
+          status: "PENDING"
+        }
+      ]
+    })
+  }
+
   const { redirect } = await import('next/navigation')
   redirect('/dashboard')
 }

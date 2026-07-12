@@ -20,9 +20,9 @@ export default function DashboardError({
         <AlertCircle className="h-6 w-6 text-destructive" />
       </div>
       <div className="text-center space-y-2">
-        <h2 className="text-xl font-bold">Something went wrong!</h2>
-        <p className="text-muted-foreground text-sm max-w-sm">
-          {error.message || "An unexpected error occurred while loading this page."}
+        <h2 className="text-2xl font-bold tracking-tight">System Error Encountered</h2>
+        <p className="text-muted-foreground text-sm max-w-sm mx-auto">
+          We apologize, but an unexpected error has occurred while processing your request. Our systems have logged the incident.
         </p>
       </div>
       <button

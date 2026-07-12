@@ -7,11 +7,18 @@ import { Architecture } from '@/components/marketing/architecture'
 import { FAQ } from '@/components/marketing/faq'
 import { CTA } from '@/components/marketing/cta'
 import { Footer } from '@/components/marketing/footer'
+import { createClient } from '@/lib/supabase/server'
+import { cookies } from 'next/headers'
 
-export default function Home() {
+export default async function Home() {
+  const cookieStore = await cookies()
+  const isDemo = cookieStore.get('demo_mode')?.value === 'true'
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
   return (
     <div className="flex min-h-screen flex-col selection:bg-primary/30">
-      <Navbar />
+      <Navbar user={user} isDemo={isDemo} />
       <main className="flex-1">
         <Hero />
         <ProductOverview />

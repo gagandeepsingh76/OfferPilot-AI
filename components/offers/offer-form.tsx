@@ -97,7 +97,7 @@ export function OfferForm({ initialData }: OfferFormProps) {
       if (error.message === "LIMIT_REACHED") {
         toast.error("You have reached your free plan limit. Please upgrade to Pro in Settings > Billing.")
       } else {
-        toast.error(error.message || "Something went wrong")
+        toast.error(error.message || "Failed to analyze document")
       }
     } finally {
       setIsPending(false)
