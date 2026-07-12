@@ -6,6 +6,14 @@ import { headers, cookies } from 'next/headers'
 export async function login(formData: FormData) {
   const email = formData.get('email') as string
   const password = formData.get('password') as string
+  
+  // Demo Account Bypass
+  if (email === 'demo@offerpilot.ai' && password === 'Demo@12345') {
+    const cookieStore = await cookies()
+    cookieStore.set('demo_mode', 'true', { maxAge: 60 * 60 * 24 * 7 })
+    return { success: true }
+  }
+
   const supabase = await createClient()
 
   const { error } = await supabase.auth.signInWithPassword({
@@ -47,6 +55,9 @@ export async function signup(formData: FormData) {
 }
 
 export async function logout() {
+  const cookieStore = await cookies()
+  cookieStore.delete('demo_mode')
+
   const supabase = await createClient()
   await supabase.auth.signOut()
   
