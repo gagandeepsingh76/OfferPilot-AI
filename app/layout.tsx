@@ -18,6 +18,21 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "OfferPilot AI | Make smarter career decisions",
   description: "Upload and analyze job offers, compare compensation packages, receive AI-powered negotiation advice, and manage multiple opportunities in one workspace.",
+  keywords: ["salary negotiation", "job offer comparison", "career advice", "tech compensation"],
+  authors: [{ name: "OfferPilot AI" }],
+  openGraph: {
+    title: "OfferPilot AI | Make smarter career decisions",
+    description: "Upload and analyze job offers, compare compensation packages, receive AI-powered negotiation advice, and manage multiple opportunities in one workspace.",
+    url: "https://offerpilot.ai",
+    siteName: "OfferPilot AI",
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "OfferPilot AI",
+    description: "Make smarter career decisions with AI.",
+  },
 };
 
 export default function RootLayout({
@@ -28,7 +43,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased scroll-smooth`}
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col">
