@@ -21,7 +21,7 @@ export async function POST(req: Request) {
 
     try {
       event = stripe.webhooks.constructEvent(body, signature, webhookSecret)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     } catch (err: any) {
       console.error(`Webhook signature verification failed: ${err.message}`)
       return NextResponse.json({ error: `Webhook Error: ${err.message}` }, { status: 400 })
@@ -70,7 +70,7 @@ export async function POST(req: Request) {
             data: {
               userId,
               action: "SUBSCRIPTION_CREATED",
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+               
               details: { plan: "PRO", subscriptionId } as any
             }
           })
@@ -101,7 +101,7 @@ export async function POST(req: Request) {
               data: {
                 userId: dbSub.userId,
                 action: "SUBSCRIPTION_UPDATED",
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                 
                 details: { status: subscription.status, cancelAtPeriodEnd: (subscription as any).cancel_at_period_end } as any
               }
             })
@@ -133,7 +133,7 @@ export async function POST(req: Request) {
               data: {
                 userId: dbSub.userId,
                 action: "SUBSCRIPTION_CANCELED",
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                 
                 details: { reason: "deleted" } as any
               }
             })
@@ -158,7 +158,7 @@ export async function POST(req: Request) {
               data: {
                 userId: dbSub.userId,
                 action: "SUBSCRIPTION_UPDATED",
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                 
                 details: { event: "invoice.payment_failed" } as any
               }
             })
@@ -171,7 +171,7 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json({ received: true })
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   } catch (err: any) {
     console.error("Webhook processing failed:", err)
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 })
