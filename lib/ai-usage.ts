@@ -9,10 +9,13 @@ const FREE_LIMITS: Record<AiActionType, number> = {
 }
 
 export async function getUsageStats(userId: string) {
-  // Removed unused subscription lookup since assessment build grants PRO to all
+  const subscription = await prisma.subscription.findUnique({
+    where: { userId },
+  })
 
-  // ASSESSMENT BUILD: All users get PRO access to showcase all features without payment
-  const isPro = true
+  const isPro = subscription?.plan === "PRO" && (
+    !subscription.currentPeriodEnd || subscription.currentPeriodEnd > new Date()
+  )
   
   const startOfMonth = new Date()
   startOfMonth.setDate(1)
@@ -52,35 +55,49 @@ export async function getUsageStats(userId: string) {
 }
 
 export async function checkAiUsage(userId: string, actionType: AiActionType): Promise<boolean> {
-  const stats = await getUsageStats(userId)
-  if (stats.isPro) return true
-  
-  switch (actionType) {
-    case "AI_ANALYSIS": return stats.aiAnalysis < stats.limits.AI_ANALYSIS
-    case "CHAT_MESSAGE": return stats.chatMessage < stats.limits.CHAT_MESSAGE
-    case "AI_COMPARISON": return stats.aiComparison < stats.limits.AI_COMPARISON
-    default: return false
+  try {
+    const stats = await getUsageStats(userId)
+    if (stats.isPro) return true
+
+    switch (actionType) {
+      case "AI_ANALYSIS": return stats.aiAnalysis < stats.limits.AI_ANALYSIS
+      case "CHAT_MESSAGE": return stats.chatMessage < stats.limits.CHAT_MESSAGE
+      case "AI_COMPARISON": return stats.aiComparison < stats.limits.AI_COMPARISON
+      default: return false
+    }
+  } catch (error) {
+    console.error("Failed to check AI usage:", error)
+    return true
   }
 }
 
 export async function checkFeatureLimit(userId: string, feature: "OFFERS" | "PDF_UPLOAD"): Promise<boolean> {
-  const stats = await getUsageStats(userId)
-  if (stats.isPro) return true
-  
-  if (feature === "OFFERS") return stats.offers < stats.limits.OFFERS
-  if (feature === "PDF_UPLOAD") return stats.pdfs < stats.limits.PDF_UPLOAD
-  
-  return false
+  try {
+    const stats = await getUsageStats(userId)
+    if (stats.isPro) return true
+
+    if (feature === "OFFERS") return stats.offers < stats.limits.OFFERS
+    if (feature === "PDF_UPLOAD") return stats.pdfs < stats.limits.PDF_UPLOAD
+
+    return false
+  } catch (error) {
+    console.error("Failed to check feature limit:", error)
+    return true
+  }
 }
 
 export async function recordAiUsage(userId: string, actionType: AiActionType) {
-  await prisma.usageRecord.create({
-    data: {
-      userId,
-      actionType,
-      count: 1
-    }
-  })
+  try {
+    await prisma.usageRecord.create({
+      data: {
+        userId,
+        actionType,
+        count: 1
+      }
+    })
+  } catch (error) {
+    console.error("Failed to record AI usage:", error)
+  }
 }
 
 export interface AiJobLog {
@@ -93,25 +110,18 @@ export interface AiJobLog {
 }
 
 export async function logAiJob(userId: string, details: AiJobLog) {
-  // We use the existing AuditLog table to store AI tracking since it has a JSON details field.
-  // We can map AuditAction to something generic or add a new enum value if we could change schema.
-  // Since we can't easily modify prisma schema enum without migrations, we will use an existing one 
-  // like 'OFFER_UPDATED' and store the real type in details, OR better yet, let's look at schema.
-  
-  // Actually, wait, AuditAction enum is strict: 
-  // OFFER_CREATED, OFFER_UPDATED, OFFER_DELETED, SUBSCRIPTION_CREATED, SUBSCRIPTION_UPDATED, SUBSCRIPTION_CANCELED
-  // Using an existing action is a hack.
-  // Let's use OFFER_UPDATED for now as a fallback if we don't add AI_JOB to the enum.
-  
-  await prisma.auditLog.create({
-    data: {
-      userId,
-      action: "OFFER_UPDATED", 
-      details: {
-        _jobType: "AI_JOB",
-        ...details,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } as any
-    }
-  })
+  try {
+    await prisma.auditLog.create({
+      data: {
+        userId,
+        action: "AI_JOB",
+        details: {
+          ...details,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } as any
+      }
+    })
+  } catch (error) {
+    console.error("Failed to log AI job:", error)
+  }
 }

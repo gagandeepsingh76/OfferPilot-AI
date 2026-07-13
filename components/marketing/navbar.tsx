@@ -5,10 +5,11 @@ import Link from "next/link"
 import { Rocket } from "lucide-react"
 import { buttonVariants } from "@/components/ui/button"
 import { ModeToggle } from "@/components/mode-toggle"
-import type { User } from "@supabase/supabase-js"
+import type { AppUser } from "@/lib/current-user"
+import { enableDemoMode } from "@/server/actions/auth"
 
-export function Navbar({ user, isDemo }: { user?: User | null, isDemo?: boolean }) {
-  const isAuthenticated = !!user || isDemo
+export function Navbar({ user }: { user?: AppUser | null }) {
+  const isAuthenticated = !!user
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-14 max-w-screen-2xl items-center mx-auto px-4 sm:px-8">
@@ -20,6 +21,9 @@ export function Navbar({ user, isDemo }: { user?: User | null, isDemo?: boolean 
           <nav className="flex items-center space-x-6 text-sm font-medium hidden md:flex">
             <Link href="#how-it-works" className="transition-colors hover:text-foreground/80 text-foreground/60">
               How It Works
+            </Link>
+            <Link href="#pricing" className="transition-colors hover:text-foreground/80 text-foreground/60">
+              Pricing
             </Link>
             <Link href="#benefits" className="transition-colors hover:text-foreground/80 text-foreground/60">
               Benefits
@@ -41,6 +45,11 @@ export function Navbar({ user, isDemo }: { user?: User | null, isDemo?: boolean 
                 <Link href="/login" className={buttonVariants({ variant: "ghost", size: "sm" })}>
                   Log in
                 </Link>
+                <form action={enableDemoMode} className="hidden sm:block">
+                  <button className={buttonVariants({ variant: "secondary", size: "sm" })}>
+                    Demo
+                  </button>
+                </form>
                 <Link href="/signup" className={buttonVariants({ size: "sm" })}>
                   Sign up
                 </Link>

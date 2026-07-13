@@ -92,7 +92,7 @@ export function ProductOverview() {
                 </div>
               </div>
               
-              {/* Analytics Chart Mockup */}
+              {/* Compensation chart preview */}
               <div className="flex-1 border border-border rounded-xl bg-card p-6 flex flex-col gap-4 shadow-sm">
                 <div className="flex items-center justify-between">
                   <h4 className="font-semibold text-sm">Compensation Breakdown</h4>

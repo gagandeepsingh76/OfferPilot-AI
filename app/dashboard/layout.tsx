@@ -1,18 +1,14 @@
 import { Sidebar } from "@/components/dashboard/sidebar"
 import { Header } from "@/components/dashboard/header"
-import { createClient } from "@/lib/supabase/server"
-
-import { cookies } from "next/headers"
+import { getCurrentAppUser } from "@/lib/current-user"
 
 export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  const cookieStore = await cookies()
-  const isDemo = cookieStore.get('demo_mode')?.value === 'true'
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getCurrentAppUser()
+  const isDemo = user?.isDemo
 
   return (
     <div className="flex min-h-screen w-full bg-muted/40">

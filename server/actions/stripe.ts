@@ -1,25 +1,30 @@
 "use server"
 
 import { getStripe } from "@/lib/stripe"
-import { createClient } from "@/lib/supabase/server"
 import { prisma } from "@/lib/prisma"
+import { getCurrentAppUser } from "@/lib/current-user"
+import { getAppUrl } from "@/lib/url"
 
 const PRO_PRICE_ID = process.env.STRIPE_PRO_PRICE_ID || ""
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
 
 export async function createCheckoutSession() {
   try {
-    const supabase = await createClient()
-    const { data: userData } = await supabase.auth.getUser()
+    const appUser = await getCurrentAppUser()
     
-    if (!userData?.user) {
-      return { success: false, error: "Unauthorized" }
+    if (!appUser) {
+      return { success: false, error: "Please sign in to manage billing." }
     }
 
-    const userId = userData.user.id
+    if (appUser.isDemo) {
+      return { success: false, error: "Demo mode includes Pro access. Use a real account to test checkout." }
+    }
+
+    if (!appUser.dbUserId) {
+      return { success: false, error: "Your account is still being prepared. Please refresh and try again." }
+    }
     
     const dbUser = await prisma.user.findUnique({
-      where: { authId: userId },
+      where: { id: appUser.dbUserId },
       include: { subscription: true }
     })
 
@@ -63,6 +68,8 @@ export async function createCheckoutSession() {
       })
     }
 
+    const appUrl = await getAppUrl()
+
     const session = await stripe.checkout.sessions.create({
       customer: stripeCustomerId,
       mode: "subscription",
@@ -73,8 +80,8 @@ export async function createCheckoutSession() {
           quantity: 1,
         }
       ],
-      success_url: `${APP_URL}/dashboard/settings/billing?success=true`,
-      cancel_url: `${APP_URL}/dashboard/settings/billing?canceled=true`,
+      success_url: `${appUrl}/dashboard/settings/billing?success=true`,
+      cancel_url: `${appUrl}/dashboard/settings/billing?canceled=true`,
       client_reference_id: dbUser.id,
       metadata: {
         userId: dbUser.id,
@@ -91,17 +98,22 @@ export async function createCheckoutSession() {
 
 export async function createCustomerPortalSession() {
   try {
-    const supabase = await createClient()
-    const { data: userData } = await supabase.auth.getUser()
+    const appUser = await getCurrentAppUser()
     
-    if (!userData?.user) {
-      return { success: false, error: "Unauthorized" }
+    if (!appUser) {
+      return { success: false, error: "Please sign in to manage billing." }
     }
 
-    const userId = userData.user.id
+    if (appUser.isDemo) {
+      return { success: false, error: "Demo mode includes Pro access. Use a real account to test the customer portal." }
+    }
+
+    if (!appUser.dbUserId) {
+      return { success: false, error: "Your account is still being prepared. Please refresh and try again." }
+    }
     
     const dbUser = await prisma.user.findUnique({
-      where: { authId: userId },
+      where: { id: appUser.dbUserId },
       include: { subscription: true }
     })
 
@@ -116,9 +128,11 @@ export async function createCustomerPortalSession() {
       return { success: false, error: "Billing is currently unavailable. Please configure Stripe." }
     }
 
+    const appUrl = await getAppUrl()
+
     const portalSession = await stripe.billingPortal.sessions.create({
       customer: stripeCustomerId,
-      return_url: `${APP_URL}/dashboard/settings/billing`,
+      return_url: `${appUrl}/dashboard/settings/billing`,
     })
 
     return { success: true, url: portalSession.url }

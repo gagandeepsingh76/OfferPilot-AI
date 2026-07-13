@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { useRouter } from "next/navigation"
-import { Search, Calculator, Settings, FileText, User } from "lucide-react"
+import { Search, Calculator, Settings, FileText, User, LineChart, Sparkles, CreditCard } from "lucide-react"
 
 import {
   CommandDialog,
@@ -19,10 +19,10 @@ export function CommandPalette() {
   const router = useRouter()
 
   React.useEffect(() => {
-    const down = (e: KeyboardEvent) => {
-      if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault()
-        setOpen((open) => !open)
+    const down = (event: KeyboardEvent) => {
+      if (event.key === "k" && (event.metaKey || event.ctrlKey)) {
+        event.preventDefault()
+        setOpen((current) => !current)
       }
     }
 
@@ -43,10 +43,10 @@ export function CommandPalette() {
       >
         <span className="flex items-center gap-2">
           <Search className="h-4 w-4" />
-          <span>Search offers...</span>
+          <span>Search actions...</span>
         </span>
         <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
-          <span className="text-xs">⌘</span>K
+          <span className="text-xs">Ctrl</span>K
         </kbd>
       </button>
       <CommandDialog open={open} onOpenChange={setOpen}>
@@ -62,6 +62,18 @@ export function CommandPalette() {
               <Calculator className="mr-2 h-4 w-4" />
               <span>Compare Offers</span>
             </CommandItem>
+            <CommandItem onSelect={() => runCommand(() => router.push("/dashboard/resume"))}>
+              <FileText className="mr-2 h-4 w-4" />
+              <span>Review Resume</span>
+            </CommandItem>
+            <CommandItem onSelect={() => runCommand(() => router.push("/dashboard/analytics"))}>
+              <LineChart className="mr-2 h-4 w-4" />
+              <span>Analytics</span>
+            </CommandItem>
+            <CommandItem onSelect={() => runCommand(() => router.push("/dashboard/insights"))}>
+              <Sparkles className="mr-2 h-4 w-4" />
+              <span>Insights</span>
+            </CommandItem>
           </CommandGroup>
           <CommandSeparator />
           <CommandGroup heading="Settings">
@@ -72,6 +84,10 @@ export function CommandPalette() {
             <CommandItem onSelect={() => runCommand(() => router.push("/dashboard/settings"))}>
               <Settings className="mr-2 h-4 w-4" />
               <span>Settings</span>
+            </CommandItem>
+            <CommandItem onSelect={() => runCommand(() => router.push("/dashboard/settings/billing"))}>
+              <CreditCard className="mr-2 h-4 w-4" />
+              <span>Billing</span>
             </CommandItem>
           </CommandGroup>
         </CommandList>

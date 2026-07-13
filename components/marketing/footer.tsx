@@ -19,7 +19,7 @@ export function Footer() {
           <div>
             <h3 className="font-semibold mb-4">Product</h3>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li><Link href="#features" className="hover:text-primary transition-colors">Features</Link></li>
+              <li><Link href="#benefits" className="hover:text-primary transition-colors">Features</Link></li>
               <li><Link href="#pricing" className="hover:text-primary transition-colors">Pricing</Link></li>
               <li><Link href="/login" className="hover:text-primary transition-colors">Log In</Link></li>
               <li><Link href="/signup" className="hover:text-primary transition-colors">Sign Up</Link></li>
@@ -29,9 +29,9 @@ export function Footer() {
           <div>
             <h3 className="font-semibold mb-4">Resources</h3>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li><Link href="#" className="hover:text-primary transition-colors">Blog</Link></li>
-              <li><Link href="#" className="hover:text-primary transition-colors">Salary Data</Link></li>
-              <li><Link href="#" className="hover:text-primary transition-colors">Negotiation Guide</Link></li>
+              <li><Link href="#how-it-works" className="hover:text-primary transition-colors">How It Works</Link></li>
+              <li><Link href="/dashboard/analytics" className="hover:text-primary transition-colors">Salary Data</Link></li>
+              <li><Link href="/dashboard/insights" className="hover:text-primary transition-colors">Negotiation Guide</Link></li>
               <li><Link href="#faq" className="hover:text-primary transition-colors">FAQ</Link></li>
             </ul>
           </div>
@@ -39,9 +39,9 @@ export function Footer() {
           <div>
             <h3 className="font-semibold mb-4">Legal</h3>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li><Link href="#" className="hover:text-primary transition-colors">Privacy Policy</Link></li>
-              <li><Link href="#" className="hover:text-primary transition-colors">Terms of Service</Link></li>
-              <li><Link href="#" className="hover:text-primary transition-colors">Cookie Policy</Link></li>
+              <li><Link href="/privacy" className="hover:text-primary transition-colors">Privacy Policy</Link></li>
+              <li><Link href="/terms" className="hover:text-primary transition-colors">Terms of Service</Link></li>
+              <li><Link href="/cookies" className="hover:text-primary transition-colors">Cookie Policy</Link></li>
             </ul>
           </div>
         </div>

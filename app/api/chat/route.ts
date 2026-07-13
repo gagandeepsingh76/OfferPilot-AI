@@ -1,45 +1,63 @@
-import { NextRequest, NextResponse } from "next/server"
-import { streamText } from "ai"
+import { NextRequest } from "next/server"
+import { convertToModelMessages, createUIMessageStream, createUIMessageStreamResponse, streamText, type UIMessage } from "ai"
 import { getOpenAI } from "@/lib/openai"
-import { createClient } from "@/lib/supabase/server"
 import { prisma } from "@/lib/prisma"
 import { checkAiUsage, recordAiUsage, logAiJob } from "@/lib/ai-usage"
+import { getCurrentAppUser } from "@/lib/current-user"
+import { getDemoOfferById } from "@/lib/demo-data"
+
+function fallbackChatResponse(message: string) {
+  const stream = createUIMessageStream<UIMessage>({
+    execute({ writer }) {
+      const id = "fallback-text"
+      writer.write({ type: "start" })
+      writer.write({ type: "text-start", id })
+      writer.write({ type: "text-delta", id, delta: message })
+      writer.write({ type: "text-end", id })
+      writer.write({ type: "finish", finishReason: "stop" })
+    },
+  })
+
+  return createUIMessageStreamResponse({ stream })
+}
 
 export async function POST(req: NextRequest) {
   const startTime = Date.now()
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const appUser = await getCurrentAppUser()
 
-  if (!user) {
-    return new Response("Unauthorized", { status: 401 })
+  if (!appUser) {
+    return fallbackChatResponse("Please sign in to use the negotiation coach.")
   }
 
-  const prismaUser = await prisma.user.findUnique({ where: { authId: user.id } })
-  if (!prismaUser) {
-    return new Response("User not found", { status: 404 })
+  if (!appUser.dbUserId) {
+    return fallbackChatResponse("Your account is still being prepared. Refresh the dashboard and try again.")
   }
 
-  const hasUsage = await checkAiUsage(prismaUser.id, "CHAT_MESSAGE")
+  const hasUsage = await checkAiUsage(appUser.dbUserId, "CHAT_MESSAGE")
   if (!hasUsage) {
-    return new Response("Free plan limit reached. Upgrade to Pro.", { status: 403 })
-  }
-
-  const openai = getOpenAI()
-  if (!openai) {
-    return NextResponse.json({ error: "AI features are currently unavailable. Please configure OpenAI." }, { status: 503 })
+    return fallbackChatResponse("You have reached the free chat limit. Upgrade in Billing to continue.")
   }
 
   try {
     const { messages, offerId } = await req.json()
 
     // Fetch Offer context
-    const offer = await prisma.offer.findUnique({
-      where: { id: offerId },
-      include: { compensation: true }
-    })
+    let offer = null
+    try {
+      offer = await prisma.offer.findUnique({
+        where: { id: offerId },
+        include: { compensation: true }
+      })
+    } catch (error) {
+      console.error("Failed to load offer for chat:", error)
+    }
 
-    if (!offer || offer.userId !== prismaUser.id) {
-      return new Response("Offer not found or unauthorized", { status: 404 })
+    if ((!offer || offer.userId !== appUser.dbUserId) && appUser.isDemo) {
+      offer = getDemoOfferById(offerId) as typeof offer
+    }
+
+    if (!offer || offer.userId !== appUser.dbUserId) {
+      return fallbackChatResponse("I could not find that offer. Go back to Offers and reopen the negotiation coach.")
     }
 
     // System prompt with offer context
@@ -60,15 +78,22 @@ export async function POST(req: NextRequest) {
       Help the user formulate negotiation strategies, write emails, and evaluate their leverage.
     `
 
-    await recordAiUsage(prismaUser.id, "CHAT_MESSAGE")
+    const openai = getOpenAI()
+    if (!openai) {
+      return fallbackChatResponse(
+        `AI chat is not configured in this environment, but here is a practical starting point for ${offer.companyName}: focus your negotiation on the highest-leverage gaps first. Ask for one or two specific improvements, such as a higher sign-on bonus, clearer equity refreshers, or more flexibility, and anchor the request in the value you bring to the role.`
+      )
+    }
+
+    await recordAiUsage(appUser.dbUserId, "CHAT_MESSAGE")
 
     const result = await streamText({
       model: openai("gpt-4o-mini"),
       system: systemPrompt,
-      messages,
+      messages: await convertToModelMessages(messages),
       async onFinish({ text, usage }) {
-        await logAiJob(prismaUser.id, {
-          prompt: messages[messages.length - 1]?.content || "",
+        await logAiJob(appUser.dbUserId!, {
+          prompt: "Chat request",
           response: text,
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           tokenUsage: usage as any,
@@ -78,16 +103,16 @@ export async function POST(req: NextRequest) {
       }
     })
 
-    return result.toTextStreamResponse()
+    return result.toUIMessageStreamResponse()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     console.error("AI Chat failed:", error)
-    await logAiJob(prismaUser.id, {
+    await logAiJob(appUser.dbUserId, {
       prompt: "Chat request",
       processingTimeMs: Date.now() - startTime,
       status: "FAILED",
       error: error.message
     })
-    return new Response("Failed to process chat", { status: 500 })
+    return fallbackChatResponse("The negotiation coach could not complete that request. Please try again in a moment.")
   }
 }

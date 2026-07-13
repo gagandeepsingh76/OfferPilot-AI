@@ -1,8 +1,9 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
-import { headers, cookies } from 'next/headers'
-import { prisma } from '@/lib/prisma'
+import { cookies } from 'next/headers'
+import { ensureDemoAccount } from '@/lib/demo-data'
+import { getAppUrl } from '@/lib/url'
 
 export async function login(formData: FormData) {
   const email = formData.get('email') as string
@@ -12,6 +13,11 @@ export async function login(formData: FormData) {
   if (email === 'demo@offerpilot.ai' && password === 'Demo@12345') {
     const cookieStore = await cookies()
     cookieStore.set('demo_mode', 'true', { maxAge: 60 * 60 * 24 * 7 })
+    try {
+      await ensureDemoAccount()
+    } catch (error) {
+      console.error("Failed to seed demo account during login:", error)
+    }
     return { success: true }
   }
 
@@ -35,8 +41,7 @@ export async function signup(formData: FormData) {
   const name = formData.get('name') as string
   const supabase = await createClient()
 
-  const requestOrigin = (await headers()).get('origin')
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || requestOrigin || 'https://offerpilot.ai'
+  const baseUrl = await getAppUrl()
 
   const { error } = await supabase.auth.signUp({
     email,
@@ -70,10 +75,10 @@ export async function logout() {
 export async function forgotPassword(formData: FormData) {
   const email = formData.get('email') as string
   const supabase = await createClient()
-  const origin = (await headers()).get('origin')
+  const baseUrl = await getAppUrl()
 
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${origin}/reset-password`,
+    redirectTo: `${baseUrl}/reset-password`,
   })
 
   if (error) {
@@ -100,8 +105,7 @@ export async function updatePassword(formData: FormData) {
 
 export async function signInWithGoogle() {
   const supabase = await createClient()
-  const requestOrigin = (await headers()).get('origin')
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || requestOrigin || 'https://offerpilot.ai'
+  const baseUrl = await getAppUrl()
   
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
@@ -110,7 +114,7 @@ export async function signInWithGoogle() {
     },
   })
   
-  if (data.url) {
+  if (data?.url) {
     return { url: data.url }
   }
   
@@ -120,27 +124,11 @@ export async function signInWithGoogle() {
 export async function enableDemoMode() {
   const cookieStore = await cookies()
   cookieStore.set('demo_mode', 'true', { maxAge: 60 * 60 * 24 * 7 }) // 1 week
-  
-  // Seed demo data if it doesn't exist
-  const existingOffers = await prisma.offer.count({ where: { userId: "demo-user-id" } })
-  
-  if (existingOffers === 0) {
-    await prisma.offer.createMany({
-      data: [
-        {
-          userId: "demo-user-id",
-          companyName: "TechNova Solutions",
-          jobTitle: "Senior Frontend Engineer",
-          status: "PENDING"
-        },
-        {
-          userId: "demo-user-id",
-          companyName: "DataSphere Inc.",
-          jobTitle: "Full Stack Developer",
-          status: "PENDING"
-        }
-      ]
-    })
+
+  try {
+    await ensureDemoAccount()
+  } catch (error) {
+    console.error("Failed to seed demo account:", error)
   }
 
   const { redirect } = await import('next/navigation')

@@ -1,22 +1,11 @@
 import Link from "next/link"
 import { Plus, Briefcase, TrendingUp, Clock, Calculator } from "lucide-react"
-import { prisma } from "@/lib/prisma"
-import { createClient } from "@/lib/supabase/server"
 import { buttonVariants } from "@/components/ui/button"
+import { getOffersForCurrentUser } from "@/lib/offers-data"
 
 async function getDashboardData() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { user, offers, error } = await getOffersForCurrentUser()
   if (!user) return null
-
-  const prismaUser = await prisma.user.findUnique({ where: { authId: user.id } })
-  if (!prismaUser) return null
-
-  const offers = await prisma.offer.findMany({
-    where: { userId: prismaUser.id },
-    include: { compensation: true },
-    orderBy: { createdAt: "desc" },
-  })
 
   let highestSalary = 0
   let pendingCount = 0
@@ -30,16 +19,28 @@ async function getDashboardData() {
 
   return {
     offers,
+    error,
     totalOffers: offers.length,
     pendingOffers: pendingCount,
     highestSalary,
+    user,
   }
 }
 
 export default async function DashboardPage() {
   const data = await getDashboardData()
   
-  if (!data) return null // Handled by middleware mostly
+  if (!data) {
+    return (
+      <div className="mx-auto max-w-3xl rounded-lg border border-border bg-card p-8 text-center">
+        <h1 className="text-2xl font-semibold">We could not load your dashboard</h1>
+        <p className="mt-2 text-sm text-muted-foreground">Please sign in again to continue.</p>
+        <Link href="/login" className={buttonVariants({ className: "mt-6" })}>
+          Return to login
+        </Link>
+      </div>
+    )
+  }
 
   const formatCurrency = (amount: number) => 
     new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(amount)
@@ -83,6 +84,12 @@ export default async function DashboardPage() {
           <p className="text-xs text-muted-foreground mt-1">Top compensation baseline</p>
         </div>
       </div>
+
+      {data.error && (
+        <div className="rounded-lg border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          {data.error}
+        </div>
+      )}
 
       {/* Recent Activity */}
       <div className="grid md:grid-cols-3 gap-8">

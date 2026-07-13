@@ -65,7 +65,7 @@ STRIPE_SECRET_KEY=your_stripe_secret_key
 STRIPE_WEBHOOK_SECRET=your_stripe_webhook_secret
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key
 STRIPE_PRO_PRICE_ID=your_stripe_pro_price_id
-NEXT_PUBLIC_APP_URL=http://localhost:3000
+NEXT_PUBLIC_APP_URL=https://your-domain.com
 ```
 
 ## Installation & Local Development
@@ -92,7 +92,7 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
    ```bash
    npm run dev
    ```
-   The application will be available at `http://localhost:3000`.
+   The application will be available at the local URL printed by Next.js.
 
 ## Stripe Setup
 1. Create a Stripe account and switch to **Test Mode**.

@@ -2,9 +2,8 @@ import { NextRequest, NextResponse } from "next/server"
 import { generateObject } from "ai"
 import { getOpenAI } from "@/lib/openai"
 import { z } from "zod"
-import { createClient } from "@/lib/supabase/server"
-import { prisma } from "@/lib/prisma"
 import { checkAiUsage, recordAiUsage, logAiJob } from "@/lib/ai-usage"
+import { getCurrentAppUser } from "@/lib/current-user"
 
 
 const ExtractSchema = z.object({
@@ -34,19 +33,17 @@ const ExtractSchema = z.object({
 
 export async function POST(req: NextRequest) {
   const startTime = Date.now()
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const appUser = await getCurrentAppUser()
 
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  if (!appUser) {
+    return NextResponse.json({ error: "Please sign in to analyze an offer document." }, { status: 401 })
   }
 
-  const prismaUser = await prisma.user.findUnique({ where: { authId: user.id } })
-  if (!prismaUser) {
-    return NextResponse.json({ error: "User not found" }, { status: 404 })
+  if (!appUser.dbUserId) {
+    return NextResponse.json({ error: "Your account is still being prepared. Refresh the dashboard and try again." }, { status: 409 })
   }
 
-  const hasUsage = await checkAiUsage(prismaUser.id, "AI_ANALYSIS")
+  const hasUsage = await checkAiUsage(appUser.dbUserId, "AI_ANALYSIS")
   if (!hasUsage) {
     return NextResponse.json({ error: "Free plan limit reached. Upgrade to Pro." }, { status: 403 })
   }
@@ -55,27 +52,34 @@ export async function POST(req: NextRequest) {
 
   try {
     const { fileUrl } = await req.json()
-    if (!fileUrl) throw new Error("Missing fileUrl")
+    if (!fileUrl) {
+      return NextResponse.json({ error: "Upload a PDF before running analysis." }, { status: 400 })
+    }
 
     promptData = fileUrl
 
     // Fetch and parse PDF
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const pdf = require("pdf-parse")
-    
     const response = await fetch(fileUrl)
+    if (!response.ok) {
+      return NextResponse.json({ error: "We could not read that PDF. Please check the upload and try again." }, { status: 400 })
+    }
     const arrayBuffer = await response.arrayBuffer()
     const buffer = Buffer.from(arrayBuffer)
-    const parsed = await pdf(buffer)
+    const { PDFParse } = await import("pdf-parse")
+    const parser = new PDFParse({ data: buffer })
+    const parsed = await parser.getText()
+    await parser.destroy()
     const pdfText = parsed.text
 
     if (!pdfText || pdfText.trim().length === 0) {
-      throw new Error("Could not extract text from PDF")
+      return NextResponse.json({ error: "We could not extract text from that PDF. You can still enter the offer details manually." }, { status: 422 })
     }
 
     const openai = getOpenAI()
     if (!openai) {
-      return NextResponse.json({ error: "AI features are currently unavailable. Please configure OpenAI." }, { status: 503 })
+      return NextResponse.json({
+        error: "AI extraction is not configured in this environment. You can still enter the offer details manually.",
+      }, { status: 503 })
     }
 
     const { object, usage } = await generateObject({
@@ -84,9 +88,9 @@ export async function POST(req: NextRequest) {
       prompt: `Extract the job offer details from the following text parsed from a PDF. If you cannot find a specific field, leave it blank or false. \n\nPDF TEXT:\n${pdfText.substring(0, 30000)}`,
     })
 
-    await recordAiUsage(prismaUser.id, "AI_ANALYSIS")
+    await recordAiUsage(appUser.dbUserId, "AI_ANALYSIS")
     
-    await logAiJob(prismaUser.id, {
+    await logAiJob(appUser.dbUserId, {
       prompt: "Extract offer from PDF",
       response: JSON.stringify(object),
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -101,13 +105,13 @@ export async function POST(req: NextRequest) {
   } catch (error: any) {
     console.error("AI Extraction failed:", error)
     
-    await logAiJob(prismaUser.id, {
+    await logAiJob(appUser.dbUserId, {
       prompt: promptData,
       processingTimeMs: Date.now() - startTime,
       status: "FAILED",
       error: error.message
     })
 
-    return NextResponse.json({ error: error.message || "Failed to process PDF" }, { status: 500 })
+    return NextResponse.json({ error: "We could not analyze that PDF. You can still enter the offer details manually." }, { status: 500 })
   }
 }

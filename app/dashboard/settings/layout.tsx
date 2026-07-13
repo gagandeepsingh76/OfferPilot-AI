@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { User, CreditCard, Shield, Sliders } from "lucide-react"
+import { User, CreditCard, Shield, Sliders, Bell } from "lucide-react"
 
 const sidebarNavItems = [
   {
@@ -19,6 +19,11 @@ const sidebarNavItems = [
     title: "Security",
     href: "/dashboard/settings/security",
     icon: Shield,
+  },
+  {
+    title: "Notifications",
+    href: "/dashboard/settings/notifications",
+    icon: Bell,
   },
   {
     title: "Preferences",

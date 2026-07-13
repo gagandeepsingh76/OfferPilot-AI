@@ -1,5 +1,15 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { DEMO_AUTH_ID, DEMO_EMAIL, demoUser } from '@/lib/demo-data'
+
+function isSupabaseConfigured(url?: string, key?: string) {
+  return Boolean(
+    url &&
+      key &&
+      !url.includes('your-project.supabase.co') &&
+      key !== 'your-anon-key'
+  )
+}
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
@@ -13,17 +23,25 @@ export async function updateSession(request: NextRequest) {
   let user = null
 
   if (isDemo) {
-    user = { id: "demo-user-id", email: "demo@offerpilot.ai", role: "authenticated" }
-  } else if (supabaseUrl && supabaseKey) {
+    user = {
+      id: DEMO_AUTH_ID,
+      email: DEMO_EMAIL,
+      role: "authenticated",
+      user_metadata: {
+        full_name: demoUser.name,
+        avatar_url: demoUser.avatarUrl,
+      },
+    }
+  } else if (isSupabaseConfigured(supabaseUrl, supabaseKey)) {
     const supabase = createServerClient(
-      supabaseUrl,
-      supabaseKey,
+      supabaseUrl!,
+      supabaseKey!,
       {
         cookies: {
           getAll() {
             return request.cookies.getAll()
           },
-          setAll(cookiesToSet) {
+          setAll(cookiesToSet: { name: string; value: string; options?: Parameters<typeof supabaseResponse.cookies.set>[2] }[]) {
             cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
             supabaseResponse = NextResponse.next({
               request,

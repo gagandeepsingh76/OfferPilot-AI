@@ -1,36 +1,16 @@
 import { notFound } from "next/navigation"
 import { ArrowLeft, MessageSquare } from "lucide-react"
 import Link from "next/link"
-import { prisma } from "@/lib/prisma"
-import { createClient } from "@/lib/supabase/server"
 import { OfferForm } from "@/components/offers/offer-form"
 import { BenefitsValues, OfferFormValues } from "@/lib/validations/offer"
+import { getOfferForCurrentUser } from "@/lib/offers-data"
 
-async function getOffer(id: string) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return null
+export default async function EditOfferPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
+  const { offer, error } = await getOfferForCurrentUser(id)
 
-  const prismaUser = await prisma.user.findUnique({ where: { authId: user.id } })
-  if (!prismaUser) return null
-
-  const offer = await prisma.offer.findUnique({
-    where: { id },
-    include: {
-      compensation: true,
-      documents: true,
-    }
-  })
-
-  if (!offer || offer.userId !== prismaUser.id) return null
-  return offer
-}
-
-export default async function EditOfferPage({ params }: { params: { id: string } }) {
-  const offer = await getOffer(params.id)
   if (!offer) notFound()
 
-  // Map to form values
   const initialData = {
     id: offer.id,
     companyName: offer.companyName,
@@ -60,22 +40,28 @@ export default async function EditOfferPage({ params }: { params: { id: string }
 
   return (
     <div className="max-w-4xl mx-auto">
+      {error && (
+        <div className="mb-6 rounded-lg border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          {error}
+        </div>
+      )}
+
       <div className="mb-8">
-        <Link 
-          href="/dashboard/offers" 
+        <Link
+          href="/dashboard/offers"
           className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-foreground transition-colors mb-4"
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to offers
         </Link>
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">{offer.companyName} Offer</h1>
             <p className="text-muted-foreground mt-1">
-              {offer.jobTitle} {offer.location ? `• ${offer.location}` : ""}
+              {offer.jobTitle} {offer.location ? `- ${offer.location}` : ""}
             </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Link
               href={`/dashboard/offers/${offer.id}/chat`}
               className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-primary/10 text-primary shadow-sm hover:bg-primary/20 h-9 px-4 py-2"

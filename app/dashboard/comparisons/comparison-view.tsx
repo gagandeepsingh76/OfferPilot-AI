@@ -5,9 +5,9 @@ import { useCompletion } from "@ai-sdk/react"
 import { Loader2, Sparkles, CheckSquare, Square } from "lucide-react"
 import { toast } from "sonner"
 import ReactMarkdown from "react-markdown"
+import type { OfferWithCompensation } from "@/lib/offers-data"
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function ComparisonView({ offers }: { offers: any[] }) {
+export function ComparisonView({ offers }: { offers: OfferWithCompensation[] }) {
   const [selectedIds, setSelectedIds] = React.useState<string[]>([])
   const { completion, complete, isLoading, error } = useCompletion({
     api: "/api/compare",
@@ -67,7 +67,7 @@ export function ComparisonView({ offers }: { offers: any[] }) {
                   <div className="font-medium text-sm">{offer.companyName}</div>
                   <div className="text-xs text-muted-foreground line-clamp-1">{offer.jobTitle}</div>
                   <div className="text-xs font-medium mt-1">
-                    {offer.compensation?.currency} {offer.compensation?.baseSalary.toLocaleString()}
+                    {offer.compensation?.currency} {(offer.compensation?.baseSalary || 0).toLocaleString()}
                   </div>
                 </div>
               </button>

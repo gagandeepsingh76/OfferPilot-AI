@@ -4,27 +4,25 @@ import { ProductOverview } from '@/components/marketing/product-overview'
 import { HowItWorks } from '@/components/marketing/how-it-works'
 import { ProductBenefits } from '@/components/marketing/product-benefits'
 import { Architecture } from '@/components/marketing/architecture'
+import { Pricing } from '@/components/marketing/pricing'
 import { FAQ } from '@/components/marketing/faq'
 import { CTA } from '@/components/marketing/cta'
 import { Footer } from '@/components/marketing/footer'
-import { createClient } from '@/lib/supabase/server'
-import { cookies } from 'next/headers'
+import { getCurrentAppUser } from '@/lib/current-user'
 
 export default async function Home() {
-  const cookieStore = await cookies()
-  const isDemo = cookieStore.get('demo_mode')?.value === 'true'
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getCurrentAppUser()
 
   return (
     <div className="flex min-h-screen flex-col selection:bg-primary/30">
-      <Navbar user={user} isDemo={isDemo} />
+      <Navbar user={user} />
       <main className="flex-1">
         <Hero />
         <ProductOverview />
         <HowItWorks />
         <ProductBenefits />
         <Architecture />
+        <Pricing />
         <FAQ />
         <CTA />
       </main>

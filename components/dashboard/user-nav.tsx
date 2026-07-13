@@ -1,6 +1,7 @@
 "use client"
 
-import { LogOut } from "lucide-react"
+import { LogOut, CreditCard, Settings, UserCircle } from "lucide-react"
+import Link from "next/link"
 import { logout } from "@/server/actions/auth"
 import {
   DropdownMenu,
@@ -12,12 +13,12 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { buttonVariants } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import type { User } from "@supabase/supabase-js"
+import type { AppUser } from "@/lib/current-user"
 
-export function UserNav({ user }: { user?: User | null }) {
+export function UserNav({ user }: { user?: AppUser | null }) {
   const email = user?.email || "demo@offerpilot.ai"
-  const name = user?.user_metadata?.full_name || "Demo User"
-  const avatarUrl = user?.user_metadata?.avatar_url || ""
+  const name = user?.name || "Demo User"
+  const avatarUrl = user?.avatarUrl || ""
 
   return (
     <DropdownMenu>
@@ -36,6 +37,19 @@ export function UserNav({ user }: { user?: User | null }) {
             </p>
           </div>
         </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem render={<Link href="/dashboard/settings/profile" />}>
+          <UserCircle className="mr-2 h-4 w-4" />
+          <span>Profile</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem render={<Link href="/dashboard/settings/billing" />}>
+          <CreditCard className="mr-2 h-4 w-4" />
+          <span>Billing</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem render={<Link href="/dashboard/settings" />}>
+          <Settings className="mr-2 h-4 w-4" />
+          <span>Settings</span>
+        </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => logout()}>
           <LogOut className="mr-2 h-4 w-4" />
