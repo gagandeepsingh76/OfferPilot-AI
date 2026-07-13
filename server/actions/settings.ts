@@ -62,6 +62,10 @@ export async function updateProfileSettings(formData: FormData) {
   const userResult = await requireDbUser()
   if (!userResult.success) return userResult
 
+  if (userResult.user.isDemo) {
+    return { success: true, message: "Demo profile changes are temporary and reset automatically." }
+  }
+
   try {
     await prisma.user.update({
       where: { id: userResult.user.dbUserId! },
@@ -118,6 +122,10 @@ export async function updatePreferenceSettings(formData: FormData) {
   const userResult = await requireDbUser()
   if (!userResult.success) return userResult
 
+  if (userResult.user.isDemo) {
+    return { success: true, message: "Demo preferences are temporary and reset automatically." }
+  }
+
   try {
     const currentProfile = await prisma.profile.findUnique({ where: { userId: userResult.user.dbUserId! } })
     const currentPreferences = mergePreferences(currentProfile?.preferences)
@@ -162,6 +170,10 @@ export async function updateNotificationSettings(formData: FormData) {
 
   const userResult = await requireDbUser()
   if (!userResult.success) return userResult
+
+  if (userResult.user.isDemo) {
+    return { success: true, message: "Demo notification settings are temporary and reset automatically." }
+  }
 
   try {
     const currentProfile = await prisma.profile.findUnique({ where: { userId: userResult.user.dbUserId! } })

@@ -58,7 +58,7 @@ export function ResumeReviewer() {
             className="min-h-80 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
           />
         </div>
-        <Button disabled={isLoading || resumeText.trim().length < 80} className="gap-2">
+        <Button type="submit" disabled={isLoading || resumeText.trim().length < 80} className="gap-2">
           {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
           Review Resume
         </Button>

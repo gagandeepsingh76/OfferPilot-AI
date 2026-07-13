@@ -91,7 +91,6 @@ export function OfferForm({ initialData }: OfferFormProps) {
 
       toast.success(initialData ? "Offer updated successfully" : "Offer created successfully")
       router.push("/dashboard/offers")
-      router.refresh()
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       if (error.message === "LIMIT_REACHED") {

@@ -41,19 +41,19 @@ export async function POST(req: NextRequest) {
   try {
     const { messages, offerId } = await req.json()
 
-    // Fetch Offer context
     let offer = null
-    try {
-      offer = await prisma.offer.findUnique({
-        where: { id: offerId },
-        include: { compensation: true }
-      })
-    } catch (error) {
-      console.error("Failed to load offer for chat:", error)
-    }
 
-    if ((!offer || offer.userId !== appUser.dbUserId) && appUser.isDemo) {
+    if (appUser.isDemo) {
       offer = getDemoOfferById(offerId) as typeof offer
+    } else {
+      try {
+        offer = await prisma.offer.findUnique({
+          where: { id: offerId },
+          include: { compensation: true }
+        })
+      } catch (error) {
+        console.error("Failed to load offer for chat:", error)
+      }
     }
 
     if (!offer || offer.userId !== appUser.dbUserId) {

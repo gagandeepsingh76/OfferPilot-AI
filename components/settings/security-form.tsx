@@ -42,7 +42,7 @@ export function SecurityForm() {
         <Label htmlFor="confirmPassword">Confirm New Password</Label>
         <Input id="confirmPassword" name="confirmPassword" type="password" autoComplete="new-password" />
       </div>
-      <Button disabled={isPending}>
+      <Button type="submit" disabled={isPending}>
         {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
         Update Password
       </Button>

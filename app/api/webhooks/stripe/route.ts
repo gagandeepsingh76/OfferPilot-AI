@@ -131,12 +131,21 @@ export async function POST(req: Request) {
         const session = event.data.object as Stripe.Checkout.Session
         if (session.mode !== "subscription") break
 
-        const subscriptionId = typeof session.subscription === "string" ? session.subscription : null
+        const sessionSubscription = session.subscription as string | Stripe.Subscription | null
+        const subscriptionId = typeof sessionSubscription === "string"
+          ? sessionSubscription
+          : sessionSubscription?.id ?? null
         if (!subscriptionId) {
           throw new Error(`Checkout session ${session.id} did not include a subscription ID`)
         }
 
-        const subscription = await stripe.subscriptions.retrieve(subscriptionId)
+        const subscription = typeof sessionSubscription === "string"
+          ? await stripe.subscriptions.retrieve(subscriptionId)
+          : sessionSubscription
+        if (!subscription) {
+          throw new Error(`Checkout session ${session.id} did not include subscription details`)
+        }
+
         const userId = session.client_reference_id ?? session.metadata?.userId ?? subscription.metadata?.userId
         const synced = await syncStripeSubscription(subscription, userId)
 

@@ -48,21 +48,21 @@ export async function POST(req: NextRequest) {
     }
 
     let offers: OfferWithCompensation[] = []
-    try {
-      offers = await prisma.offer.findMany({
-        where: {
-          id: { in: offerIds },
-          userId: appUser.dbUserId,
-        },
-        include: { compensation: true }
-      })
-    } catch (error) {
-      console.error("Failed to load offers for comparison:", error)
-    }
-
-    if (offers.length !== offerIds.length && appUser.isDemo) {
+    if (appUser.isDemo) {
       const demoOffers = getDemoOffers().filter((offer) => offerIds.includes(offer.id))
       offers = demoOffers as OfferWithCompensation[]
+    } else {
+      try {
+        offers = await prisma.offer.findMany({
+          where: {
+            id: { in: offerIds },
+            userId: appUser.dbUserId,
+          },
+          include: { compensation: true }
+        })
+      } catch (error) {
+        console.error("Failed to load offers for comparison:", error)
+      }
     }
 
     if (offers.length !== offerIds.length) {
@@ -106,7 +106,7 @@ export async function POST(req: NextRequest) {
         .map((offer) => {
           const comp = offer.compensation
           const total = (comp?.baseSalary || 0) + (comp?.bonus || 0) + (comp?.signOnBonus || 0) + (comp?.equity || 0)
-          return `- **${offer.companyName}**: estimated package ${comp?.currency || "USD"} ${total.toLocaleString()} with ${offer.jobTitle}.`
+          return `- **${offer.companyName}**: estimated package ${comp?.currency || "USD"} ${total.toLocaleString("en-US")} with ${offer.jobTitle}.`
         })
         .join("\n")
 

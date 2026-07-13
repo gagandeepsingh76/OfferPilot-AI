@@ -14,7 +14,7 @@ export default async function BillingSettingsPage() {
   let prismaUser = null
 
   try {
-    prismaUser = user.dbUserId
+    prismaUser = user.dbUserId && !user.isDemo
       ? await prisma.user.findUnique({
         where: { id: user.dbUserId },
         include: { subscription: true }

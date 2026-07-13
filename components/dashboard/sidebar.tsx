@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Rocket, LayoutDashboard, Briefcase, BarChart2, Settings, FileText, LineChart, Sparkles } from "lucide-react"
+import { Rocket, LayoutDashboard, Briefcase, BarChart2, Settings, FileText, LineChart, Sparkles, ShieldCheck } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 
@@ -13,6 +13,7 @@ const navItems = [
   { name: "Resume", href: "/dashboard/resume", icon: FileText },
   { name: "Analytics", href: "/dashboard/analytics", icon: LineChart },
   { name: "Insights", href: "/dashboard/insights", icon: Sparkles },
+  { name: "Admin", href: "/dashboard/admin", icon: ShieldCheck },
   { name: "Settings", href: "/dashboard/settings", icon: Settings },
 ]
 

@@ -41,7 +41,11 @@ export function OfferRowActions({ offerId }: { offerId: string }) {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className="p-2 hover:bg-muted rounded-md transition-colors" disabled={isPending}>
+      <DropdownMenuTrigger
+        aria-label="Offer actions"
+        className="p-2 hover:bg-muted rounded-md transition-colors"
+        disabled={isPending}
+      >
         {isPending ? (
           <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
         ) : (
@@ -49,7 +53,7 @@ export function OfferRowActions({ offerId }: { offerId: string }) {
         )}
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-44">
-        <DropdownMenuItem render={<Link href={`/dashboard/offers/${offerId}`} />}>
+        <DropdownMenuItem render={<Link href={`/dashboard/offers/${offerId}/edit`} />}>
           Edit Offer
         </DropdownMenuItem>
         <DropdownMenuSeparator />

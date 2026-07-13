@@ -52,7 +52,7 @@ export function NotificationsForm({ preferences }: { preferences: AppPreferences
         ))}
       </div>
       <div className="flex justify-end">
-        <Button disabled={isPending}>
+        <Button type="submit" disabled={isPending}>
           {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           Save Notifications
         </Button>

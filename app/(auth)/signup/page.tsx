@@ -7,6 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import * as z from 'zod'
 import { signup, signInWithGoogle } from '@/server/actions/auth'
+import { useHydrated } from '@/hooks/use-hydrated'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -24,6 +25,7 @@ export default function SignUpPage() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [isGoogleLoading, setIsGoogleLoading] = useState(false)
+  const isReady = useHydrated()
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -79,7 +81,7 @@ export default function SignUpPage() {
         </p>
       </div>
 
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <form method="post" onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="name">Full Name</Label>
           <Input id="name" placeholder="John Doe" {...form.register('name')} />
@@ -96,12 +98,12 @@ export default function SignUpPage() {
         </div>
         <div className="space-y-2">
           <Label htmlFor="password">Password</Label>
-          <Input id="password" type="password" placeholder="••••••••" {...form.register('password')} />
+          <Input id="password" type="password" placeholder="Create a password" {...form.register('password')} />
           {form.formState.errors.password && (
             <p className="text-sm font-medium text-destructive">{form.formState.errors.password.message}</p>
           )}
         </div>
-        <Button type="submit" className="w-full" disabled={isLoading || isGoogleLoading}>
+        <Button type="submit" className="w-full" disabled={!isReady || isLoading || isGoogleLoading}>
           {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           Sign Up
         </Button>
@@ -124,7 +126,7 @@ export default function SignUpPage() {
           type="button"
           className="w-full"
           onClick={handleGoogleLogin}
-          disabled={isLoading || isGoogleLoading || !isSupabaseConfigured}
+          disabled={!isReady || isLoading || isGoogleLoading || !isSupabaseConfigured}
         >
           {isGoogleLoading ? (
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />

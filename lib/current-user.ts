@@ -8,7 +8,6 @@ import {
   DEMO_EMAIL,
   demoPreferences,
   demoUser,
-  ensureDemoAccount,
 } from "@/lib/demo-data"
 import { isSubscriptionActive } from "@/lib/subscription"
 
@@ -99,37 +98,17 @@ export async function getCurrentAppUser(): Promise<AppUser | null> {
   const isDemo = cookieStore.get("demo_mode")?.value === "true"
 
   if (isDemo) {
-    try {
-      const user = await ensureDemoAccount()
-      const profile = await prisma.profile.findUnique({ where: { userId: user.id } })
-      const subscription = await prisma.subscription.findUnique({ where: { userId: user.id } })
-
-      return {
-        authId: DEMO_AUTH_ID,
-        dbUserId: user.id,
-        email: DEMO_EMAIL,
-        name: user.name || demoUser.name,
-        avatarUrl: user.avatarUrl || demoUser.avatarUrl,
-        isDemo: true,
-        plan: subscription ? (isSubscriptionActive(subscription) ? "PRO" : "FREE") : "PRO",
-        currentRole: profile?.currentRole,
-        experienceLevel: profile?.experienceLevel,
-        preferences: mergePreferences(profile?.preferences),
-      }
-    } catch (error) {
-      console.error("Demo account setup failed:", error)
-      return {
-        authId: DEMO_AUTH_ID,
-        dbUserId: DEMO_AUTH_ID,
-        email: DEMO_EMAIL,
-        name: demoUser.name,
-        avatarUrl: demoUser.avatarUrl,
-        isDemo: true,
-        plan: "PRO",
-        currentRole: "Senior Software Engineer",
-        experienceLevel: "5+ years",
-        preferences: demoPreferences,
-      }
+    return {
+      authId: DEMO_AUTH_ID,
+      dbUserId: DEMO_AUTH_ID,
+      email: DEMO_EMAIL,
+      name: demoUser.name,
+      avatarUrl: demoUser.avatarUrl,
+      isDemo: true,
+      plan: "PRO",
+      currentRole: "Senior Software Engineer",
+      experienceLevel: "5+ years",
+      preferences: demoPreferences,
     }
   }
 

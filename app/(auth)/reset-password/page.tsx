@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import * as z from 'zod'
 import { updatePassword } from '@/server/actions/auth'
+import { useHydrated } from '@/hooks/use-hydrated'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -24,6 +25,7 @@ const formSchema = z.object({
 export default function ResetPasswordPage() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
+  const isReady = useHydrated()
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -58,22 +60,22 @@ export default function ResetPasswordPage() {
         </p>
       </div>
 
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <form method="post" onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="password">New Password</Label>
-          <Input id="password" type="password" placeholder="••••••••" {...form.register('password')} />
+          <Input id="password" type="password" placeholder="New password" {...form.register('password')} />
           {form.formState.errors.password && (
             <p className="text-sm font-medium text-destructive">{form.formState.errors.password.message}</p>
           )}
         </div>
         <div className="space-y-2">
           <Label htmlFor="confirmPassword">Confirm Password</Label>
-          <Input id="confirmPassword" type="password" placeholder="••••••••" {...form.register('confirmPassword')} />
+          <Input id="confirmPassword" type="password" placeholder="Confirm password" {...form.register('confirmPassword')} />
           {form.formState.errors.confirmPassword && (
             <p className="text-sm font-medium text-destructive">{form.formState.errors.confirmPassword.message}</p>
           )}
         </div>
-        <Button type="submit" className="w-full" disabled={isLoading}>
+        <Button type="submit" className="w-full" disabled={!isReady || isLoading}>
           {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           Reset password
         </Button>

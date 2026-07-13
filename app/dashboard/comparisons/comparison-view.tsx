@@ -1,7 +1,6 @@
 "use client"
 
 import * as React from "react"
-import { useCompletion } from "@ai-sdk/react"
 import { Loader2, Sparkles, CheckSquare, Square } from "lucide-react"
 import { toast } from "sonner"
 import ReactMarkdown from "react-markdown"
@@ -9,12 +8,13 @@ import type { OfferWithCompensation } from "@/lib/offers-data"
 
 export function ComparisonView({ offers }: { offers: OfferWithCompensation[] }) {
   const [selectedIds, setSelectedIds] = React.useState<string[]>([])
-  const { completion, complete, isLoading, error } = useCompletion({
-    api: "/api/compare",
-    onError: (err) => {
-      toast.error(err.message || "Failed to generate comparison")
-    }
-  })
+  const [completion, setCompletion] = React.useState("")
+  const [error, setError] = React.useState("")
+  const [isLoading, setIsLoading] = React.useState(false)
+  const formatNumber = React.useMemo(
+    () => new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }),
+    []
+  )
 
   const toggleSelect = (id: string) => {
     setSelectedIds(prev => 
@@ -27,7 +27,31 @@ export function ComparisonView({ offers }: { offers: OfferWithCompensation[] }) 
       toast.error("Please select at least 2 offers to compare.")
       return
     }
-    await complete("", { body: { offerIds: selectedIds } })
+
+    setIsLoading(true)
+    setError("")
+    setCompletion("")
+
+    try {
+      const response = await fetch("/api/compare", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ offerIds: selectedIds }),
+      })
+
+      const text = await response.text()
+      if (!response.ok) {
+        throw new Error(text || "Failed to generate comparison")
+      }
+
+      setCompletion(text)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to generate comparison"
+      setError(message)
+      toast.error(message)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   if (offers.length < 2) {
@@ -67,7 +91,7 @@ export function ComparisonView({ offers }: { offers: OfferWithCompensation[] }) 
                   <div className="font-medium text-sm">{offer.companyName}</div>
                   <div className="text-xs text-muted-foreground line-clamp-1">{offer.jobTitle}</div>
                   <div className="text-xs font-medium mt-1">
-                    {offer.compensation?.currency} {(offer.compensation?.baseSalary || 0).toLocaleString()}
+                    {offer.compensation?.currency} {formatNumber.format(offer.compensation?.baseSalary || 0)}
                   </div>
                 </div>
               </button>
@@ -83,7 +107,7 @@ export function ComparisonView({ offers }: { offers: OfferWithCompensation[] }) 
             {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
             {isLoading ? "Analyzing..." : "Compare Selected"}
           </button>
-          {error && <p className="text-xs text-destructive mt-2 text-center">{error.message}</p>}
+          {error && <p className="text-xs text-destructive mt-2 text-center">{error}</p>}
         </div>
       </div>
 

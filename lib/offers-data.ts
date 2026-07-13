@@ -11,6 +11,14 @@ export async function getOffersForCurrentUser() {
   const user = await getCurrentAppUser()
   if (!user) return { user: null, offers: [] as OfferWithCompensation[], error: null }
 
+  if (user.isDemo) {
+    return {
+      user,
+      offers: getDemoOffers() as unknown as OfferWithCompensation[],
+      error: null,
+    }
+  }
+
   try {
     if (!user.dbUserId) {
       throw new Error("Database user is not available")
@@ -45,6 +53,14 @@ export async function getOffersForCurrentUser() {
 export async function getOfferForCurrentUser(id: string) {
   const user = await getCurrentAppUser()
   if (!user) return { user: null, offer: null, error: null }
+
+  if (user.isDemo) {
+    return {
+      user,
+      offer: getDemoOfferById(id) as unknown as OfferWithCompensation | null,
+      error: null,
+    }
+  }
 
   try {
     if (!user.dbUserId) {

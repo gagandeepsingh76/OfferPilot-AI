@@ -123,6 +123,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
             />
             <button
               type="submit"
+              aria-label="Send message"
               disabled={isLoading || !input.trim()}
               className="inline-flex items-center justify-center h-12 w-12 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
             >

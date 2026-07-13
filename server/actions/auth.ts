@@ -2,7 +2,6 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { cookies } from 'next/headers'
-import { ensureDemoAccount } from '@/lib/demo-data'
 import { getAppUrl } from '@/lib/url'
 
 export async function login(formData: FormData) {
@@ -13,11 +12,6 @@ export async function login(formData: FormData) {
   if (email === 'demo@offerpilot.ai' && password === 'Demo@12345') {
     const cookieStore = await cookies()
     cookieStore.set('demo_mode', 'true', { maxAge: 60 * 60 * 24 * 7 })
-    try {
-      await ensureDemoAccount()
-    } catch (error) {
-      console.error("Failed to seed demo account during login:", error)
-    }
     return { success: true }
   }
 
@@ -124,12 +118,6 @@ export async function signInWithGoogle() {
 export async function enableDemoMode() {
   const cookieStore = await cookies()
   cookieStore.set('demo_mode', 'true', { maxAge: 60 * 60 * 24 * 7 }) // 1 week
-
-  try {
-    await ensureDemoAccount()
-  } catch (error) {
-    console.error("Failed to seed demo account:", error)
-  }
 
   const { redirect } = await import('next/navigation')
   redirect('/dashboard')

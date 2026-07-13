@@ -5,16 +5,29 @@ import { prisma } from "@/lib/prisma"
 import { OfferFormValues } from "@/lib/validations/offer"
 import { Prisma } from "@prisma/client"
 import { getCurrentAppUser } from "@/lib/current-user"
+import { DEMO_AUTH_ID } from "@/lib/demo-data"
 
 async function getPrismaUser() {
   const appUser = await getCurrentAppUser()
   if (!appUser) return { success: false as const, error: "Please sign in to continue." }
   if (!appUser.dbUserId) return { success: false as const, error: "Your account is still being prepared. Please refresh and try again." }
+  if (appUser.isDemo) {
+    return {
+      success: true as const,
+      isDemo: true as const,
+      user: {
+        id: DEMO_AUTH_ID,
+        email: appUser.email,
+        name: appUser.name,
+        avatarUrl: appUser.avatarUrl,
+      },
+    }
+  }
 
   const prismaUser = await prisma.user.findUnique({ where: { id: appUser.dbUserId } })
   if (!prismaUser) return { success: false as const, error: "Your account profile could not be found." }
   
-  return { success: true as const, user: prismaUser }
+  return { success: true as const, isDemo: false as const, user: prismaUser }
 }
 
 export async function createOffer(data: OfferFormValues) {
@@ -22,6 +35,24 @@ export async function createOffer(data: OfferFormValues) {
     const userResult = await getPrismaUser()
     if (!userResult.success) return { success: false, error: userResult.error }
     const user = userResult.user
+
+    if (userResult.isDemo) {
+      return {
+        success: true,
+        data: {
+          id: `demo-offer-${Date.now()}`,
+          userId: user.id,
+          companyName: data.companyName,
+          jobTitle: data.jobTitle,
+          location: data.location ?? null,
+          status: data.status as "PENDING" | "ACCEPTED" | "REJECTED" | "ARCHIVED",
+          notes: data.notes ?? null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      }
+    }
+
     const { checkFeatureLimit } = await import("@/lib/ai-usage")
     const canCreate = await checkFeatureLimit(user.id, "OFFERS")
     if (!canCreate) {
@@ -73,6 +104,12 @@ export async function updateOffer(id: string, data: OfferFormValues) {
     const userResult = await getPrismaUser()
     if (!userResult.success) return { success: false, error: userResult.error }
     const user = userResult.user
+
+    if (userResult.isDemo) {
+      revalidatePath(`/dashboard/offers/${id}`)
+      revalidatePath("/dashboard/offers")
+      return { success: true, data: { id } }
+    }
     
     // Verify ownership
     const existing = await prisma.offer.findUnique({ where: { id } })
@@ -135,6 +172,12 @@ export async function deleteOffer(id: string) {
     const userResult = await getPrismaUser()
     if (!userResult.success) return { success: false, error: userResult.error }
     const user = userResult.user
+
+    if (userResult.isDemo) {
+      revalidatePath("/dashboard/offers")
+      revalidatePath("/dashboard")
+      return { success: true }
+    }
     
     const existing = await prisma.offer.findUnique({ where: { id } })
     if (!existing || existing.userId !== user.id) throw new Error("Not found or unauthorized")
@@ -163,6 +206,12 @@ export async function archiveOffer(id: string) {
     const userResult = await getPrismaUser()
     if (!userResult.success) return { success: false, error: userResult.error }
     const user = userResult.user
+
+    if (userResult.isDemo) {
+      revalidatePath(`/dashboard/offers/${id}`)
+      revalidatePath("/dashboard/offers")
+      return { success: true }
+    }
     
     const existing = await prisma.offer.findUnique({ where: { id } })
     if (!existing || existing.userId !== user.id) throw new Error("Not found or unauthorized")
@@ -186,6 +235,23 @@ export async function saveOfferDocument(offerId: string, fileName: string, fileU
     const userResult = await getPrismaUser()
     if (!userResult.success) return { success: false, error: userResult.error }
     const user = userResult.user
+
+    if (userResult.isDemo) {
+      revalidatePath(`/dashboard/offers/${offerId}`)
+      return {
+        success: true,
+        data: {
+          id: `demo-document-${Date.now()}`,
+          offerId,
+          fileName,
+          fileUrl,
+          fileType,
+          fileSize,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      }
+    }
     
     const existing = await prisma.offer.findUnique({ where: { id: offerId } })
     if (!existing || existing.userId !== user.id) throw new Error("Not found or unauthorized")

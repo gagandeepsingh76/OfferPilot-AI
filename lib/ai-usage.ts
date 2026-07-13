@@ -55,6 +55,8 @@ export async function getUsageStats(userId: string) {
 }
 
 export async function checkAiUsage(userId: string, actionType: AiActionType): Promise<boolean> {
+  if (userId === DEMO_AUTH_ID) return true
+
   try {
     const stats = await getUsageStats(userId)
     if (stats.isPro) return true
@@ -72,6 +74,8 @@ export async function checkAiUsage(userId: string, actionType: AiActionType): Pr
 }
 
 export async function checkFeatureLimit(userId: string, feature: "OFFERS" | "PDF_UPLOAD"): Promise<boolean> {
+  if (userId === DEMO_AUTH_ID) return true
+
   try {
     const stats = await getUsageStats(userId)
     if (stats.isPro) return true
@@ -87,6 +91,8 @@ export async function checkFeatureLimit(userId: string, feature: "OFFERS" | "PDF
 }
 
 export async function recordAiUsage(userId: string, actionType: AiActionType) {
+  if (userId === DEMO_AUTH_ID) return
+
   try {
     await prisma.usageRecord.create({
       data: {
@@ -110,6 +116,8 @@ export interface AiJobLog {
 }
 
 export async function logAiJob(userId: string, details: AiJobLog) {
+  if (userId === DEMO_AUTH_ID) return
+
   try {
     await prisma.auditLog.create({
       data: {

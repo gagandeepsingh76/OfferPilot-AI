@@ -22,7 +22,10 @@ export function UserNav({ user }: { user?: AppUser | null }) {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className={buttonVariants({ variant: "ghost", size: "icon", className: "rounded-full overflow-hidden h-8 w-8 bg-muted" })}>
+      <DropdownMenuTrigger
+        aria-label="User menu"
+        className={buttonVariants({ variant: "ghost", size: "icon", className: "rounded-full overflow-hidden h-8 w-8 bg-muted" })}
+      >
         <Avatar className="h-8 w-8">
           <AvatarImage src={avatarUrl} alt={name} />
           <AvatarFallback>{name.charAt(0).toUpperCase()}</AvatarFallback>

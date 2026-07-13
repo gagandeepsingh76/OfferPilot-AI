@@ -64,7 +64,7 @@ export function ProfileForm({ name, email, avatarUrl, currentRole, experienceLev
           <Label htmlFor="experienceLevel">Experience Level</Label>
           <Input id="experienceLevel" name="experienceLevel" defaultValue={experienceLevel || ""} placeholder="5+ years" />
         </div>
-        <Button className="mt-2" disabled={isPending}>
+        <Button type="submit" className="mt-2" disabled={isPending}>
           {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           Update Profile
         </Button>
