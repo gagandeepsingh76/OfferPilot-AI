@@ -79,13 +79,13 @@ export async function POST(req: NextRequest) {
     `
 
     const openai = getOpenAI()
+    await recordAiUsage(appUser.dbUserId, "CHAT_MESSAGE")
+
     if (!openai) {
       return fallbackChatResponse(
         `AI chat is not configured in this environment, but here is a practical starting point for ${offer.companyName}: focus your negotiation on the highest-leverage gaps first. Ask for one or two specific improvements, such as a higher sign-on bonus, clearer equity refreshers, or more flexibility, and anchor the request in the value you bring to the role.`
       )
     }
-
-    await recordAiUsage(appUser.dbUserId, "CHAT_MESSAGE")
 
     const result = await streamText({
       model: openai("gpt-4o-mini"),

@@ -1,9 +1,10 @@
 "use server"
 
-import { getStripe } from "@/lib/stripe"
+import { getStripe, isStripeCheckoutConfigured } from "@/lib/stripe"
 import { prisma } from "@/lib/prisma"
 import { getCurrentAppUser } from "@/lib/current-user"
 import { getAppUrl } from "@/lib/url"
+import { isSubscriptionActive } from "@/lib/subscription"
 
 const PRO_PRICE_ID = process.env.STRIPE_PRO_PRICE_ID || ""
 
@@ -32,12 +33,11 @@ export async function createCheckoutSession() {
       return { success: false, error: "User not found" }
     }
 
-    if (!PRO_PRICE_ID) {
+    if (!isStripeCheckoutConfigured() || !PRO_PRICE_ID) {
       return { success: false, error: "Stripe Price ID is not configured" }
     }
 
-    // Check if user already has a subscription that is active
-    if (dbUser.subscription?.plan === "PRO" && dbUser.subscription?.stripeCustomerId) {
+    if (isSubscriptionActive(dbUser.subscription) && dbUser.subscription?.stripeCustomerId) {
       return { success: false, error: "You already have a Pro subscription" }
     }
 
@@ -85,6 +85,11 @@ export async function createCheckoutSession() {
       client_reference_id: dbUser.id,
       metadata: {
         userId: dbUser.id,
+      },
+      subscription_data: {
+        metadata: {
+          userId: dbUser.id,
+        },
       },
     })
 

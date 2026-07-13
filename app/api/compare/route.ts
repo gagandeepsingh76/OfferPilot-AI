@@ -69,6 +69,8 @@ export async function POST(req: NextRequest) {
       return textResponse("One or more selected offers could not be loaded.", 404)
     }
 
+    await recordAiUsage(appUser.dbUserId, "AI_COMPARISON")
+
     // Format offers for the AI
     const offersContext = offers.map((o, idx) => `
       Offer ${idx + 1}:
@@ -112,8 +114,6 @@ export async function POST(req: NextRequest) {
         `AI comparison is not configured in this environment, so here is a deterministic comparison from your saved offer data:\n\n${totals}\n\nRecommendation: prioritize the offer with the strongest mix of cash certainty, equity quality, role scope, and location fit. If two offers are close, negotiate the weaker package using the stronger offer as leverage.`
       )
     }
-
-    await recordAiUsage(appUser.dbUserId, "AI_COMPARISON")
 
     const result = await streamText({
       model: openai("gpt-4o-mini"),

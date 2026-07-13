@@ -10,10 +10,21 @@ interface BillingFormProps {
   isPro: boolean
   isStripeConfigured: boolean
   isDemo?: boolean
+  cancelAtPeriodEnd?: boolean
+  currentPeriodEnd?: string | null
 }
 
-export function BillingForm({ isPro, isStripeConfigured, isDemo }: BillingFormProps) {
+export function BillingForm({
+  isPro,
+  isStripeConfigured,
+  isDemo,
+  cancelAtPeriodEnd = false,
+  currentPeriodEnd,
+}: BillingFormProps) {
   const [isLoading, setIsLoading] = useState(false)
+  const periodLabel = currentPeriodEnd
+    ? new Intl.DateTimeFormat("en", { month: "short", day: "numeric", year: "numeric" }).format(new Date(currentPeriodEnd))
+    : null
 
   const handleAction = async () => {
     if (isDemo) {
@@ -58,6 +69,11 @@ export function BillingForm({ isPro, isStripeConfigured, isDemo }: BillingFormPr
               ? "You are currently on the Pro plan."
               : "Upgrade to Pro to unlock advanced AI features."}
           </p>
+          {isPro && periodLabel && (
+            <p className="text-xs text-muted-foreground mt-1">
+              {cancelAtPeriodEnd ? `Access ends ${periodLabel}.` : `Renews ${periodLabel}.`}
+            </p>
+          )}
         </div>
       </div>
 

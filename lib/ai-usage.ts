@@ -1,4 +1,6 @@
 import { prisma } from "@/lib/prisma"
+import { DEMO_AUTH_ID } from "@/lib/demo-data"
+import { isSubscriptionActive } from "@/lib/subscription"
 
 export type AiActionType = "AI_ANALYSIS" | "CHAT_MESSAGE" | "AI_COMPARISON"
 
@@ -13,9 +15,7 @@ export async function getUsageStats(userId: string) {
     where: { userId },
   })
 
-  const isPro = subscription?.plan === "PRO" && (
-    !subscription.currentPeriodEnd || subscription.currentPeriodEnd > new Date()
-  )
+  const isPro = isSubscriptionActive(subscription)
   
   const startOfMonth = new Date()
   startOfMonth.setDate(1)
@@ -67,7 +67,7 @@ export async function checkAiUsage(userId: string, actionType: AiActionType): Pr
     }
   } catch (error) {
     console.error("Failed to check AI usage:", error)
-    return true
+    return userId === DEMO_AUTH_ID
   }
 }
 
@@ -82,7 +82,7 @@ export async function checkFeatureLimit(userId: string, feature: "OFFERS" | "PDF
     return false
   } catch (error) {
     console.error("Failed to check feature limit:", error)
-    return true
+    return userId === DEMO_AUTH_ID
   }
 }
 

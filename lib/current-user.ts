@@ -10,6 +10,7 @@ import {
   demoUser,
   ensureDemoAccount,
 } from "@/lib/demo-data"
+import { isSubscriptionActive } from "@/lib/subscription"
 
 export type AppPreferences = typeof demoPreferences
 
@@ -110,7 +111,7 @@ export async function getCurrentAppUser(): Promise<AppUser | null> {
         name: user.name || demoUser.name,
         avatarUrl: user.avatarUrl || demoUser.avatarUrl,
         isDemo: true,
-        plan: subscription?.plan ?? "PRO",
+        plan: subscription ? (isSubscriptionActive(subscription) ? "PRO" : "FREE") : "PRO",
         currentRole: profile?.currentRole,
         experienceLevel: profile?.experienceLevel,
         preferences: mergePreferences(profile?.preferences),
@@ -187,7 +188,7 @@ export async function getCurrentAppUser(): Promise<AppUser | null> {
       name: dbUser.name || name,
       avatarUrl: dbUser.avatarUrl || avatarUrl,
       isDemo: false,
-      plan: subscription.plan,
+      plan: isSubscriptionActive(subscription) ? "PRO" : "FREE",
       currentRole: profile.currentRole,
       experienceLevel: profile.experienceLevel,
       preferences: mergePreferences(profile.preferences),

@@ -57,6 +57,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Free plan limit reached. Upgrade to Pro." }, { status: 403 })
   }
 
+  await recordAiUsage(appUser.dbUserId, "AI_ANALYSIS")
+
   const openai = getOpenAI()
   if (!openai) {
     return NextResponse.json({ review: fallbackReview(role, text) })
@@ -69,7 +71,6 @@ export async function POST(req: NextRequest) {
       prompt: `Target role: ${role}\n\nResume:\n${text.slice(0, 30000)}`,
     })
 
-    await recordAiUsage(appUser.dbUserId, "AI_ANALYSIS")
     await logAiJob(appUser.dbUserId, {
       prompt: `Resume review for ${role}`,
       response: review,
