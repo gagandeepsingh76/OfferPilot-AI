@@ -1,5 +1,4 @@
-import { Prisma } from "@prisma/client"
-import { prisma } from "@/lib/prisma"
+import type { Prisma } from "@prisma/client"
 
 export const DEMO_AUTH_ID = "demo-user-id"
 export const DEMO_EMAIL = "demo@offerpilot.ai"
@@ -193,6 +192,8 @@ export function getDemoOffers() {
 }
 
 export async function ensureDemoAccount() {
+  const { prisma } = await import("@/lib/prisma")
+
   const user = await prisma.user.upsert({
     where: { authId: DEMO_AUTH_ID },
     update: {
